@@ -1013,17 +1013,9 @@ function view(l){
                           `Rồng chạm tới robot khi robot đang ở vị trí lùi cuối cùng. Đây là thua tạm thời (bị kẹt). Popup hồi sinh hiện sau 3 giây.`)]
     ]))+
     ent(nm('Revive','Hồi sinh'),ul([
-      t(`When stuck, the player can revive with coins or a rewarded ad.`,
-        `Khi bị kẹt, người chơi có thể hồi sinh bằng xu hoặc xem quảng cáo có thưởng.`),
-      t(`Revive clears every parking slot: each box in a slot is removed, together with the exact number of matching segments needed to fill that box.`,
-        `Hồi sinh dọn sạch mọi ô đỗ: mỗi hộp trong ô bị loại bỏ, kèm đúng số đốt cùng màu cần để lấp đầy hộp đó.`),
-      t(`The dragon is pushed back to its starting point.`,
-        `Con rồng bị đẩy lùi về điểm xuất phát.`),
-      t(`Each level starts with a base revive cost. The cost rises with each revive in that level, up to the max number of revives per level. Exact numbers: TBD.`,
-        `Mỗi màn bắt đầu với một mức giá hồi sinh gốc. Giá tăng sau mỗi lần hồi sinh trong màn đó, cho tới khi chạm số lần hồi sinh tối đa mỗi màn. Con số cụ thể: Chưa chốt.`),
-      t(`First-time freebie: the very first revive in the player’s whole lifetime is free, whatever the level.`,
-        `Lần đầu miễn phí: lần hồi sinh đầu tiên trong suốt quá trình chơi của người chơi được miễn phí, ở bất kỳ màn nào.`),
-      t(`The revive cost and limits are in remote config (section 5).`,`Giá và giới hạn hồi sinh nằm trong cấu hình từ xa (mục 5).`)
+      t(`Revive clears every parking slot, together with the matching segments those boxes still need, and pushes the dragon back to its starting point.`,
+        `Hồi sinh dọn sạch mọi ô đỗ, kèm các đốt cùng màu mà các hộp đó còn cần, và đẩy rồng lùi về điểm xuất phát.`),
+      t(`The full revive rules (cost, first free revive, limits) are in 1.3.`,`Quy tắc hồi sinh đầy đủ (giá, lần hồi sinh miễn phí đầu tiên, giới hạn) nằm ở mục 1.3.`)
     ]));
 
   B['main-game-mechanics']=
@@ -1194,8 +1186,10 @@ function view(l){
             `Một yếu tố mở ở màn 5, yếu tố tiếp theo mở ở màn 10.`),
           t(`The bar shows each number after the player completes that level. After level 7, it shows “3/5”.`,
             `Thanh hiện mỗi con số sau khi người chơi hoàn thành màn tương ứng. Sau màn 7, thanh hiện “3/5”.`)
-        ])))+
+        ])));
 
+  /* 1.3 order: hearts, element unlock progress, win screen bonus, RV slot, level loop back, revive */
+  const rvSlot=
     sys(nm('Reward ads slot (RV Slot)','Ô quảng cáo thưởng'),
       lead(t(`RV Slots let the player watch a rewarded ad to earn an extra slot in the level.`,
              `Ô quảng cáo thưởng (RV Slot) cho phép người chơi xem quảng cáo có thưởng để nhận thêm một ô trong màn chơi.`))+
@@ -1211,7 +1205,6 @@ function view(l){
           `Mỗi lần mở ô quảng cáo thưởng cho thêm 1 ô đỗ, chỉ trong màn đang chơi. Khi mua bằng xu hoặc quảng cáo có thưởng, người chơi vẫn phải tự kích hoạt.`)
       ]));
 
-  /* the win screen bonus is the last system in 1.3 */
   B['additional-mechanics']+=
     sys(nm('Win screen bonus','Thưởng thêm ở màn hình thắng'),
       lead(t(`On the win screen, the player can multiply the level’s coin reward by watching a rewarded ad. A swinging needle picks the multiplier, which turns the ad into a small moment of timing and luck.`,
@@ -1247,7 +1240,76 @@ function view(l){
         t(`No ad available: the Bonus button looks disabled. The needle still swings but does nothing.`,`Không có quảng cáo: nút Thưởng thêm hiện ở trạng thái mờ. Kim vẫn lắc nhưng không có tác dụng.`),
         t(`Daily ad limit for the multiplier reached: hide the gauge and the Bonus button, and re-center the rest of the screen.`,`Đã hết số lần xem quảng cáo nhân thưởng trong ngày: ẩn đồng hồ và nút Thưởng thêm, căn giữa lại phần còn lại của màn hình.`),
         t(`Lock every input on the win screen during the 1-second pause and the ad, so double taps do nothing.`,`Khóa mọi thao tác trên màn hình thắng trong 1 giây chờ và lúc quảng cáo chạy, để chạm hai lần không gây lỗi.`)
-      ])+`<p class="note">${t(`Swing speed, each segment’s multiplier and the daily ad limit are remote config, so the chance of hitting ×5 can be tuned without a new build.`,`Tốc độ lắc của kim, hệ số của từng ô và giới hạn quảng cáo mỗi ngày đều nằm trong cấu hình từ xa, nên có thể chỉnh tỉ lệ trúng ×5 mà không cần ra bản mới.`)}</p>`));
+      ])+`<p class="note">${t(`Swing speed, each segment’s multiplier and the daily ad limit are remote config, so the chance of hitting ×5 can be tuned without a new build.`,`Tốc độ lắc của kim, hệ số của từng ô và giới hạn quảng cáo mỗi ngày đều nằm trong cấu hình từ xa, nên có thể chỉnh tỉ lệ trúng ×5 mà không cần ra bản mới.`)}</p>`))+
+
+    rvSlot+
+
+    sys(nm('Level loop back','Lặp lại màn chơi'),
+      lead(t(`After the last level, the game keeps going by replaying earlier levels. The level number keeps counting up, so the player never sees an end.`,
+             `Sau màn cuối cùng, game tiếp tục bằng cách cho chơi lại các màn trước đó. Số màn vẫn tăng dần, nên người chơi không thấy game kết thúc.`))+
+      tiles([
+        ['40',t('Last level','Màn cuối cùng')],
+        ['20',t('Loop starts from','Bắt đầu lặp từ màn')],
+        ['21',t('Levels in each loop (20 to 40)','Số màn mỗi vòng lặp (20 tới 40)')]
+      ])+
+      panel(t('Level loop back logic','Cách lặp lại màn'),ol([
+        t(`The player completes level 40, the last level.`,`Người chơi hoàn thành màn 40, màn cuối cùng.`),
+        t(`The next level shows as level 41 but plays the content of level 20.`,`Màn tiếp theo hiện là màn 41 nhưng chơi nội dung của màn 20.`),
+        t(`The player goes on through the content of levels 21, 22 … 40 (shown as 42, 43 … 61).`,`Người chơi tiếp tục với nội dung màn 21, 22 … 40 (hiện là 42, 43 … 61).`),
+        t(`After the content of level 40, it loops back to level 20 again (shown as 62), and so on.`,`Sau nội dung màn 40, game lại quay về màn 20 (hiện là 62), cứ thế lặp lại.`)
+      ]))+
+      panel(t('Level mapping','Cách tính màn'),
+        kv([
+          [nm('Shown level','Màn hiển thị'),t(`The number the player sees. It always counts up: 41, 42, 43 …`,`Con số người chơi nhìn thấy. Luôn tăng dần: 41, 42, 43 …`)],
+          [nm('Content level','Màn nội dung'),t(`The level that is actually loaded.`,`Màn thực sự được tải để chơi.`)+
+            `<span class="fx"><code>${t('content = 20 + (shown − 41) mod 21, for shown ≥ 41','nội dung = 20 + (hiển thị − 41) mod 21, khi hiển thị ≥ 41')}</code></span>`]
+        ])+
+        table(t('Level loop back examples','Ví dụ lặp lại màn'),[t('Shown level','Màn hiển thị'),t('Content level','Màn nội dung')],
+          [['40','40'],['41','20'],['42','21'],['61','40'],['62','20']],'compact'))+
+      panel(t('Rules','Quy tắc'),ul([
+        t(`Every UI shows the shown level (HUD, Home, win and lose screens), never the content level.`,`Mọi giao diện đều hiện màn hiển thị (HUD, màn hình chính, màn hình thắng và thua), không bao giờ hiện màn nội dung.`),
+        t(`Looped levels work like any other level: same coin reward, win screen bonus, hearts, revive and live ops.`,`Màn lặp lại hoạt động như mọi màn khác: cùng xu thưởng, thưởng thêm ở màn hình thắng, tim, hồi sinh và live ops.`),
+        t(`Level checks (offer unlocks, Skip Level, remote config) use the shown level.`,`Các điều kiện theo màn (mở ưu đãi, Bỏ qua màn, cấu hình từ xa) dùng màn hiển thị.`),
+        t(`Skipping a looped level moves on to the next shown level, which follows the same mapping.`,`Bỏ qua một màn lặp lại sẽ chuyển sang màn hiển thị tiếp theo, vẫn theo cách tính trên.`),
+        t(`If an update adds new levels, a player whose shown level is now within the new range plays that level’s own content.`,`Nếu bản cập nhật thêm màn mới, người chơi có màn hiển thị nằm trong số màn mới sẽ chơi đúng nội dung của màn đó.`),
+        t(`Analytics logs both the shown level and the content level.`,`Analytics ghi cả màn hiển thị và màn nội dung.`)
+      ])+`<p class="note">${t(`The last level and the loop start level are remote config (<code>level_loop_last_level</code>, <code>level_loop_start_level</code>).`,`Màn cuối cùng và màn bắt đầu lặp nằm trong cấu hình từ xa (<code>level_loop_last_level</code>, <code>level_loop_start_level</code>).`)}</p>`))+
+
+    sys(nm('Revive','Hồi sinh'),
+      lead(t(`When the dragon reaches the robot at its final backdown position, the Revive popup gives one more chance to continue the same attempt instead of failing.`,
+             `Khi rồng chạm tới robot ở vị trí lùi cuối cùng, popup Hồi sinh cho thêm một cơ hội để chơi tiếp lượt đang chơi thay vì thua.`))+
+      tiles([
+        ['900',t('Coins for the 1st revive','Số xu cho lần hồi sinh đầu')],
+        ['1',t('Revive by ad per attempt','Lần hồi sinh bằng quảng cáo mỗi lượt')],
+        [t('Free','Miễn phí'),t('The very first revive in the game','Lần hồi sinh đầu tiên trong game'),'hot']
+      ])+
+      panel(t('When it shows','Khi nào hiện'),ul([
+        t(`3 seconds after the lose condition is met (see 1.1), before the lose screen.`,`3 giây sau khi điều kiện thua xảy ra (xem 1.1), trước màn hình thua.`),
+        t(`If the player loses again in the same attempt, the popup shows again with the next price.`,`Nếu người chơi lại thua trong cùng lượt chơi, popup hiện lại với mức giá tiếp theo.`)
+      ]))+
+      panel(t('Options','Lựa chọn'),kv([
+        [t('Coins','Xu'),t(`Pay <code>revive_base_cost</code> (900). Each next revive in the same level costs the current price × <code>revive_cost_growth</code>, until the max number of revives per level (TBD). Not enough coins: the button opens the store, and the player comes back to the popup afterwards.`,
+                          `Trả <code>revive_base_cost</code> (900). Mỗi lần hồi sinh tiếp theo trong cùng màn có giá = giá hiện tại × <code>revive_cost_growth</code>, cho tới khi chạm số lần hồi sinh tối đa mỗi màn (Chưa chốt). Không đủ xu: nút sẽ mở cửa hàng, sau đó người chơi quay lại popup.`)],
+        [t('Rewarded ad','Quảng cáo có thưởng'),t(`Free. At most <code>revive_max_ads_per_attempt</code> (1) per attempt. After that, the ad button hides.`,
+                          `Miễn phí. Tối đa <code>revive_max_ads_per_attempt</code> (1) lần mỗi lượt chơi. Sau đó nút quảng cáo được ẩn.`)],
+        [t('First-time freebie','Lần đầu miễn phí'),t(`The very first revive in the player’s whole lifetime is free, whatever the level. The popup shows a free button instead of the price.`,
+                          `Lần hồi sinh đầu tiên trong suốt quá trình chơi được miễn phí, ở bất kỳ màn nào. Popup hiện nút miễn phí thay cho giá.`)],
+        [t('Give up','Bỏ cuộc'),t(`Closes the popup and goes to the lose screen.`,`Đóng popup và chuyển sang màn hình thua.`)]
+      ]))+
+      panel(t('What happens on revive','Khi hồi sinh'),ul([
+        t(`The game continues from where it stopped: same level, same board, progress kept. The level does not restart and no life is lost.`,
+          `Game chơi tiếp từ chỗ đang dừng: cùng màn, cùng bàn chơi, giữ nguyên tiến độ. Màn không bị chơi lại và không mất tim.`),
+        t(`Every parking slot is cleared: each box in a slot is removed, together with the exact number of matching segments needed to fill that box.`,
+          `Mọi ô đỗ được dọn sạch: mỗi hộp trong ô bị loại bỏ, kèm đúng số đốt cùng màu cần để lấp đầy hộp đó.`),
+        t(`The dragon is pushed back to its starting point.`,`Con rồng bị đẩy lùi về điểm xuất phát.`),
+        t(`The revive count and price reset when a new attempt starts (restart or next level).`,`Số lần hồi sinh và giá được tính lại khi bắt đầu lượt chơi mới (chơi lại hoặc qua màn).`)
+      ]))+
+      panel(t('Edge cases','Trường hợp đặc biệt'),ul([
+        t(`Ad closed early or failed: no revive. The player stays on the popup and can pick another option.`,`Quảng cáo bị tắt sớm hoặc lỗi: không được hồi sinh. Người chơi vẫn ở popup và có thể chọn lựa chọn khác.`),
+        t(`Store purchase cancelled or failed: back to the popup with nothing changed.`,`Mua trong cửa hàng bị hủy hoặc lỗi: quay lại popup, không thay đổi gì.`),
+        t(`Lock every input while the slots clear and the dragon is pushed back, so taps during the animation do nothing.`,`Khóa mọi thao tác khi ô đỗ đang được dọn và rồng đang bị đẩy lùi, để chạm trong lúc hiệu ứng chạy không gây lỗi.`),
+        t(`A box in a slot needs more segments of its color than the dragon still has: TBD.`,`Hộp trong ô cần nhiều đốt cùng màu hơn số đốt còn trên thân rồng: Chưa chốt.`)
+      ])));
 
   /* PER GAME: one caption per entry in DEMOS, same keys. The first ten are the template's example demos. */
   const DCAP={
@@ -1525,6 +1587,10 @@ function view(l){
       ['revive_cost_growth',t('Revive cost growth (next revive = current cost × this)','Mức tăng giá hồi sinh (lần sau = giá hiện tại × hệ số này)'),'1.00×','×'],
       ['revive_max_ads_per_attempt',t('Max revives by ad in one attempt','Số lần hồi sinh bằng quảng cáo tối đa trong một lượt chơi'),'1',t('count','lần')]
     ])+
+    rc(t('Level loop back','Lặp lại màn chơi'),[
+      ['level_loop_last_level',t('Last level. After it, the game loops back.','Màn cuối cùng. Sau màn này, game quay lại lặp màn.'),'40',t('level','màn')],
+      ['level_loop_start_level',t('Level the loop starts from','Màn bắt đầu vòng lặp'),'20',t('level','màn')]
+    ])+
     rc(t('Lives','Mạng'),[
       ['lives_max',t('Maximum lives','Số mạng tối đa'),'5',lives],
       ['life_refill_minutes',t('Minutes to regenerate 1 life','Số phút để hồi 1 mạng'),'20',t('min','phút')]
@@ -1614,7 +1680,7 @@ function view(l){
     [nm('Revive','Hồi sinh'),t('Coins or rewarded ad','Xu hoặc quảng cáo có thưởng'),t('Always','Luôn có'),
       t(`The moment the player loses a level.`,`Ngay khi người chơi thua một màn.`),
       t(`At most 1 revive by ad per attempt (<code>revive_max_ads_per_attempt</code>).`,`Tối đa 1 lần hồi sinh bằng quảng cáo mỗi lượt chơi (<code>revive_max_ads_per_attempt</code>).`),
-      dash,dash,see('gameplay-overview','1.1')],
+      dash,dash,see('additional-mechanics','1.3')],
     [nm('Refill lives','Nạp tim'),t('Coins or rewarded ad','Xu hoặc quảng cáo có thưởng'),t('Always','Luôn có'),
       t(`The player tries to start or retry a level with 0 lives.`,`Người chơi muốn bắt đầu hoặc chơi lại một màn khi còn 0 tim.`),
       t(`900 coins for 5 lives, or 1 ad for 1 life (remote config).`,`900 xu được 5 tim, hoặc 1 quảng cáo được 1 tim (cấu hình từ xa).`),
@@ -1799,6 +1865,11 @@ function view(l){
   const day=(title,body)=>`<div class="sub"><h3><span>${title}</span></h3>${body}</div>`;
   B['change-note']=`<p class="sec-intro">${t('Changes made to this GDD, newest day first.','Các thay đổi của tài liệu này, ngày mới nhất ở trên cùng.')}</p>`+
     day(t('25 Oct 2026','25/10/2026'),
+      ent(t('New template format','Theo format template mới'),ul([
+        t(`Section 1.3 now follows the new template order: hearts, element unlock progress, win screen bonus, RV Slot, level loop back, revive.`,`Mục 1.3 theo thứ tự của template mới: tim, tiến độ mở khóa yếu tố, thưởng thêm ở màn hình thắng, RV Slot, lặp lại màn chơi, hồi sinh.`),
+        t(`Added Level loop back to 1.3 and its keys to remote config.`,`Thêm Lặp lại màn chơi vào mục 1.3 và các key của nó vào cấu hình từ xa.`),
+        t(`Moved the full revive rules from 1.1 to 1.3, using this game’s revive (clear the slots and push the dragon back).`,`Chuyển quy tắc hồi sinh đầy đủ từ mục 1.1 sang 1.3, theo cách hồi sinh của game này (dọn ô đỗ và đẩy rồng lùi).`)
+      ]))+
       ent(t('Fail-safe and booster tutorial','Chống kẹt và hướng dẫn công cụ'),ul([
         t(`${P.el3} fail-safe: if no other box remains to break the ice, the ice breaks by itself.`,`Chống kẹt cho ${P.el3}: nếu không còn hộp nào khác để phá băng, băng tự vỡ.`),
         t(`${P.bo1} popup text is now “Remove 1 box from the board.”`,`Nội dung popup ${P.bo1} đổi thành “Remove 1 box from the board.”`)
