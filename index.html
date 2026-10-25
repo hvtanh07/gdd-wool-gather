@@ -1,0 +1,2175 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wool Gather GDD</title>
+<!--
+  GDD TEMPLATE. How to use it: see TEMPLATE.md next to this file.
+  FIXED sections (keep the logic, only change numbers): 1.3 Additional mechanics (includes the win screen bonus),
+  2.1 FTUE logic, 5 Remote config, 6 IAP & offers, 7 Live ops.
+  PER GAME sections: everything marked "PER GAME" in the script, plus the hero.
+-->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EEF1F6; --surface:#FFFFFF; --ink:#18203A; --muted:#566079; --line:#D6DCE8; --tint:#E3E8F1;
+  --rail:#232A40; --rail-ink:#EEF1F8; --rail-muted:#AAB3C9; --rail-line:rgba(255,255,255,.13); --rail-hover:rgba(255,255,255,.08);
+  --track:#2A3149; --accent:#1F55D6; --focus:#1F55D6; --mark:#FFDF5E; --flash:rgba(255,214,64,.42); --wip:#FBE7A1;
+  --c1:#D9363E; --c2:#2563EB; --c3:#1B8641; --c4:#F4BE0B; --c5:#F472B6; --c6:#F58220; --c7:#7C4DDB; --c8:#22B8D1;
+  --display:"Baloo 2","Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --body:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --rail-w:304px; --bar-h:0px;
+  --hid:#7D8597; --ice:#4FB3DB; --door:#8A5A35; --veil:rgba(24,32,58,.58);
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#131826; --surface:#1B2234; --ink:#E9EDF7; --muted:#A3ADC4; --line:#2F3852; --tint:#232B41;
+    --rail:#0E1220; --track:#0B0F1B; --accent:#8FB1FF; --focus:#8FB1FF; --flash:rgba(255,214,64,.26); --wip:#5A4B14;
+    --hid:#6E778C; --ice:#8FD8F5; --door:#B98252; --veil:rgba(6,9,18,.66);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131826; --surface:#1B2234; --ink:#E9EDF7; --muted:#A3ADC4; --line:#2F3852; --tint:#232B41;
+  --rail:#0E1220; --track:#0B0F1B; --accent:#8FB1FF; --focus:#8FB1FF; --flash:rgba(255,214,64,.26); --wip:#5A4B14;
+    --hid:#6E778C; --ice:#8FD8F5; --door:#B98252; --veil:rgba(6,9,18,.66);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + var(--bar-h) + 14px)}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font:400 1rem/1.65 var(--body);-webkit-text-size-adjust:100%;text-size-adjust:100%}
+a{color:var(--accent);text-underline-offset:3px}
+button{font:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:6px}
+.rail :focus-visible{outline-color:#fff}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- layout ---------- */
+.app{display:grid;grid-template-columns:var(--rail-w) minmax(0,1fr)}
+main{container-type:inline-size;padding:48px clamp(20px,5vw,64px) 30vh;width:100%;max-width:1040px;min-width:0;margin-inline:auto}
+
+/* ---------- rail (contents + search) ---------- */
+.rail{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;z-index:30;
+  height:100vh;height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
+  display:flex;flex-direction:column;background:var(--rail);color:var(--rail-ink)}
+.brand{display:flex;align-items:center;gap:12px;padding:22px 20px 14px;color:inherit;text-decoration:none;font:800 1.4rem/1.05 var(--display)}
+.brand .cap{width:38px;height:38px}
+.brand small{display:block;margin-top:3px;font:500 .8rem/1.2 var(--body);color:var(--rail-muted)}
+.menu-btn{display:none}
+.lang{display:grid;grid-template-columns:1fr 1fr;margin:0 18px 12px;padding:3px;border-radius:999px;background:rgba(255,255,255,.1)}
+.lang button{border:0;background:none;color:var(--rail-ink);font:600 .88rem/1 var(--body);padding:9px 10px;border-radius:999px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:#fff;color:#18203A}
+.lang .short{display:none}
+.search{position:relative;margin:0 18px 10px}
+.search input{width:100%;height:44px;border-radius:12px;border:1px solid var(--rail-line);background:rgba(255,255,255,.07);
+  color:var(--rail-ink);font:400 1rem/1 var(--body);padding:0 70px 0 40px;-webkit-appearance:none;appearance:none}
+.search input::placeholder{color:var(--rail-muted);opacity:1}
+.search input:placeholder-shown{padding-right:46px}
+.search input::-webkit-search-cancel-button{display:none}
+.search .ico{position:absolute;left:13px;top:50%;width:17px;height:17px;transform:translateY(-50%);color:var(--rail-muted);pointer-events:none}
+.search-r{position:absolute;right:6px;top:0;bottom:0;display:flex;align-items:center;gap:2px}
+.hint{font-size:.8rem;color:var(--rail-muted);padding:0 6px;font-variant-numeric:tabular-nums}
+.hint.key{border:1px solid var(--rail-line);border-radius:6px;padding:1px 7px;margin-right:6px}
+.clr{width:34px;height:34px;border:0;border-radius:8px;background:none;color:var(--rail-ink);font-size:1.5rem;line-height:1;cursor:pointer}
+.clr:hover{background:var(--rail-hover)}
+.panel{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:4px 10px 28px}
+.rail[data-view="toc"] #results,.rail[data-view="results"] #toc{display:none}
+
+.toc ol{list-style:none;margin:0;padding:0}
+.toc>ol>li{margin-bottom:6px}
+.toc a{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:10px;color:var(--rail-ink);text-decoration:none;font-weight:600;font-size:.96rem;line-height:1.3}
+.toc a .cap{width:26px;height:26px}
+.toc a .tl{flex:1;min-width:0}
+.toc ol ol a{font-weight:400;font-size:.92rem;color:var(--rail-muted);padding:6px 10px 6px 12px}
+.toc ol ol .num{flex:none;width:2.1em;text-align:right;font-variant-numeric:tabular-nums}
+.toc a:hover{background:var(--rail-hover)}
+.toc a.on{background:rgba(255,255,255,.14);color:#fff}
+.toc .wipt{flex:none;font-size:.72rem;font-weight:600;color:#18203A;background:var(--c4);border-radius:999px;padding:1px 7px}
+
+.res-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:2px 10px 8px;color:var(--rail-muted);font-size:.86rem}
+.linkbtn{border:0;background:none;color:var(--rail-ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:4px;font-size:.86rem}
+.res{display:block;padding:9px 10px;border-radius:10px;color:var(--rail-ink);text-decoration:none}
+.res:hover,.res[aria-current="true"]{background:var(--rail-hover)}
+.res[aria-current="true"]{box-shadow:inset 3px 0 0 var(--mark)}
+.res .crumb{display:block;font-size:.78rem;color:var(--rail-muted);margin-bottom:2px}
+.res .snip{display:block;font-size:.9rem;line-height:1.45;overflow-wrap:anywhere}
+.res mark{background:var(--mark);color:#18203A;border-radius:3px;padding:0 2px}
+.res-empty{padding:6px 10px;font-size:.92rem;line-height:1.5}
+.res-empty p{margin:0 0 8px}
+.res-empty .muted{color:var(--rail-muted)}
+.res-tip{padding:10px 10px 0;color:var(--rail-muted);font-size:.8rem}
+
+/* ---------- caps ---------- */
+.cap{position:relative;display:inline-grid;place-items:center;flex:none;width:1.5em;height:1.5em;color:var(--cc,var(--c2));--on:#fff}
+.cap svg{position:absolute;inset:0;width:100%;height:100%}
+.cap b{position:relative;font:800 1em/1 var(--display);color:var(--on);transform:translateY(.04em)}
+.c1{--cc:var(--c1)}.c2{--cc:var(--c2)}.c3{--cc:var(--c3)}.c4{--cc:var(--c4)}
+.c5{--cc:var(--c5)}.c6{--cc:var(--c6)}.c7{--cc:var(--c7)}.c8{--cc:var(--c8)}
+.c4,.c5,.c6,.c8{--on:#18203A}
+
+/* ---------- hero ---------- */
+.hero{display:grid;gap:32px}
+.hero h1{font:800 clamp(2.9rem,9cqi,4.6rem)/.95 var(--display);margin:0;letter-spacing:-.01em}
+.hero .kind{font:600 1.25rem/1.3 var(--display);color:var(--muted);margin:8px 0 0}
+.hero .pitch{font-size:1.12rem;line-height:1.6;max-width:44ch;margin:18px 0 0}
+.legend{list-style:none;margin:22px 0 0;padding:0;display:grid;gap:2px;max-width:520px}
+.legend button{display:grid;grid-template-columns:26px minmax(0,1fr);gap:12px;align-items:start;width:100%;text-align:left;border:0;background:none;color:inherit;border-radius:12px;padding:8px;margin-left:-8px;cursor:pointer;line-height:1.45}
+.legend button:hover,.legend button[aria-pressed="true"]{background:var(--tint)}
+.pinl{display:block;width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--paper);font:700 .92rem/27px var(--display);text-align:center}
+.legend b{font-weight:600}
+.legend .d{display:block;color:var(--muted);font-size:.94rem}
+.field{margin:0;justify-self:start;width:100%;max-width:372px}
+.field-box{background:var(--surface);border:1px solid var(--line);border-radius:30px;padding:16px;overflow:hidden}
+.field svg{display:block;width:100%;height:auto}
+.field figcaption{font-size:.86rem;line-height:1.5;color:var(--muted);margin:10px 4px 0}
+.field-foot{display:flex;justify-content:flex-end;margin:8px 4px 0}
+.pause{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 14px;font-size:.85rem;font-weight:500;cursor:pointer}
+.track{fill:none;stroke:var(--track);stroke-width:50}
+.trackfill{fill:var(--track)}
+.belt-dot{fill:none;stroke-linecap:round;stroke-width:8.4;stroke-dashoffset:var(--o);animation:belt 7s linear infinite}
+@keyframes belt{to{stroke-dashoffset:calc(var(--o) - 8px)}}
+.field.paused .belt-dot{animation-play-state:paused}
+.s1{stroke:var(--c1)}.s2{stroke:var(--c2)}.s3{stroke:var(--c3)}.s4{stroke:var(--c4)}.s5{stroke:var(--c5)}.s6{stroke:var(--c6)}.s7{stroke:var(--c7)}.s8{stroke:var(--c8)}
+.f1{fill:var(--c1)}.f2{fill:var(--c2)}.f3{fill:var(--c3)}.f4{fill:var(--c4)}.f5{fill:var(--c5)}.f6{fill:var(--c6)}.f7{fill:var(--c7)}.f8{fill:var(--c8)}
+.slot{fill:none;stroke:var(--muted);stroke-width:1.6;stroke-dasharray:5 5}
+.lip{fill:#000;opacity:.26}
+.bn{font:800 19px var(--display);text-anchor:middle;fill:#fff}
+.bn.l{fill:#18203A}
+.pin circle{fill:var(--ink);stroke:var(--surface);stroke-width:2}
+.pin text{font:700 12.5px var(--display);text-anchor:middle;fill:var(--paper)}
+/* element demos */
+.demo{margin:14px 0 0;max-width:212px}
+.demo-box{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:8px 8px 6px}
+.demo svg{display:block;width:100%;height:auto;overflow:visible}
+.demo .scene g,.demo .scene circle,.demo .scene rect,.demo .scene line,.demo .scene path{transform-box:fill-box;transform-origin:center}
+.demo figcaption{font-size:.8rem;line-height:1.45;color:var(--muted);margin:8px 2px 0}
+.demo-btn{position:absolute;right:6px;bottom:6px;width:30px;height:30px;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.demo-btn svg{width:11px;height:11px;fill:currentColor}
+.demo-btn .i-play,.demo-btn[aria-pressed="true"] .i-pause{display:none}
+.demo-btn[aria-pressed="true"] .i-play{display:block}
+.bn.sm{font-size:15px}
+.chain{fill:none;stroke:var(--ink);stroke-width:4;stroke-dasharray:6 3;stroke-linecap:round}
+.veil{fill:var(--veil)}
+.padlock path{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round}
+.padlock rect{fill:#fff}
+.padlock.ink path{stroke:var(--ink)}
+.padlock.ink rect{fill:var(--ink)}
+.hidbox{fill:var(--hid)}
+.qmark{font:800 17px var(--display);text-anchor:middle;fill:#fff}
+.ice{fill:none;stroke:var(--ice);stroke-width:3}
+.door{fill:var(--door)}
+.smoke circle{fill:var(--line)}
+.tap{fill:none;stroke:var(--ink);stroke-width:2.5}
+.lkslot{fill:var(--tint);stroke:var(--muted);stroke-width:1.6}
+.part{transition:opacity .18s ease}
+.field[data-hl] .part{opacity:.2}
+.field[data-hl="A"] .part-A,.field[data-hl="B"] .part-B,.field[data-hl="C"] .part-C,.field[data-hl="D"] .part-D,.field[data-hl="E"] .part-E{opacity:1}
+@container (min-width:780px){
+  .hero{grid-template-columns:minmax(0,1fr) minmax(280px,360px);gap:48px;align-items:start}
+  .field{justify-self:end}
+}
+
+/* ---------- sections ---------- */
+.sec{margin-top:88px}
+.sec>h2{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;font:800 2.15rem/1.15 var(--display);margin:0}
+.sec>h2 .cap{width:48px;height:48px;font-size:1.6rem}
+.sec-intro{color:var(--muted);max-width:68ch;margin:10px 0 0}
+.sub>.sec-intro{margin:0 0 14px}
+.sub{margin-top:44px}
+.sub>h3{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;font:700 1.5rem/1.2 var(--display);margin:0 0 12px}
+.sub>h3 .num{color:var(--muted);font-weight:600}
+.wip{font:600 .8rem/1.2 var(--body);background:var(--wip);color:var(--ink);padding:4px 11px;border-radius:999px;white-space:nowrap;align-self:center}
+.empty{color:var(--muted);font-style:italic;margin:0}
+.sec>h2 + .ent,.sec>h2 + .tbl,.sec>h2 + .sec-intro + .ent{margin-top:22px}
+
+.ent{padding:18px 0 16px;border-top:1px solid var(--line)}
+.ent-h h4,.defs dt{font:700 1.14rem/1.3 var(--display);margin:0}
+.ent-h{min-width:0}
+.orig{display:block;font:500 .82rem/1.3 var(--body);color:var(--muted)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 0;font-size:.84rem;font-weight:500;line-height:1.35}
+.tags span{display:inline-block;background:var(--tint);color:var(--ink);border-radius:8px;padding:3px 9px}
+.ent-b{margin-top:8px;min-width:0}
+.ent-b>p{margin:0 0 8px;max-width:68ch}
+.defs{margin:0}
+.defs>div{padding:16px 0;border-top:1px solid var(--line)}
+.defs dd{margin:6px 0 0;max-width:68ch}
+@container (min-width:720px){
+  .ent,.defs>div{display:grid;grid-template-columns:200px minmax(0,1fr);gap:8px 32px}
+  .ent-b,.defs dd{margin-top:0}
+}
+
+ul.bl,ul.params{list-style:none;margin:0;padding:0}
+ul.bl>li{position:relative;padding-left:1.2em;margin:0 0 .45em;max-width:68ch}
+ul.bl>li::before{content:"";position:absolute;left:.12em;top:.66em;width:.38em;height:.38em;border-radius:50%;background:var(--muted)}
+ul.bl ul.bl{margin:.4em 0 .2em}
+ul.bl ul.bl>li::before{background:none;border:1.5px solid var(--muted)}
+ol.steps{margin:.5em 0 .3em;padding-left:1.5em;max-width:66ch}
+ol.steps>li{margin:0 0 .35em;padding-left:.2em}
+ol.steps>li::marker{font-weight:700;font-family:var(--display)}
+ol.steps ol.steps{list-style-type:lower-alpha;margin:.35em 0 .35em}
+ol.steps .after{display:block;margin-top:.1em}
+ul.params>li{margin:0 0 .7em;max-width:68ch}
+ul.params>li>b{display:block;font-weight:600}
+ul.params>li>span{display:block}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 4px}
+.chips span{background:var(--tint);border-radius:8px;padding:3px 11px;font-weight:500}
+.note{background:var(--tint);border-radius:14px;padding:12px 16px;max-width:68ch;margin:16px 0 4px;font-size:.95rem}
+/* template placeholders: replace every .ph with real content */
+.ph{display:inline;color:var(--muted);font-style:italic;background:var(--tint);border:1.5px dashed var(--muted);border-radius:6px;padding:0 6px;-webkit-box-decoration-break:clone;box-decoration-break:clone}.note b{font-weight:600}
+
+/* ---------- tables ---------- */
+.tbl{overflow-x:auto;margin:6px 0 4px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:540px;font-size:.96rem;line-height:1.5}
+th,td{text-align:left;vertical-align:top;padding:13px 16px;border-bottom:1px solid var(--line)}
+thead th{font-weight:600;font-size:.86rem;color:var(--muted);white-space:nowrap}
+tbody th{font-weight:600}
+tbody tr:last-child>*{border-bottom:0}
+.wide table{min-width:760px}
+.xwide table{min-width:820px}
+.xwide th,.xwide td{padding:12px 9px}
+.xwide th:first-child,.xwide td:first-child{padding-left:14px}
+.xwide code{font-size:.8em;padding:1px 5px}
+.xwide thead th{white-space:normal;vertical-align:bottom}
+.xwide tbody th[scope=row],.xwide tbody td{white-space:nowrap}
+.xwide tbody td.wrap{white-space:normal;min-width:96px}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.grp th{background:var(--tint);font-weight:700;padding-block:8px}
+.tbl ul.bl{margin:0}
+.tbl.compact table{min-width:0}
+.gbox .tbl{margin:0;background:var(--surface)}
+.tbl ul.bl>li{margin:0 0 .3em}
+.pops table{min-width:1080px;font-size:.92rem}
+.pops th,.pops td{padding:11px 10px}
+.pops tbody th[scope=row]{min-width:130px}
+.pops td:nth-child(4),.pops td:nth-child(5){min-width:200px}
+.pops code{font-size:.82em}
+.lvl{font:800 1.35rem/1.1 var(--display)}
+.dash{color:var(--muted)}
+.popup{display:inline-block;white-space:nowrap;font:700 1.02rem/1.25 var(--display);border:2px solid var(--ink);border-radius:12px;padding:6px 13px;text-align:center}
+.gloss{display:block;white-space:nowrap;color:var(--muted);font-size:.87rem;line-height:1.4;margin-top:6px}
+.steps-tbl tbody{counter-reset:st}
+.steps-tbl tbody th{position:relative;padding-left:52px;min-width:200px}
+.steps-tbl tbody th::before{counter-increment:st;content:counter(st);position:absolute;left:16px;top:12px;width:1.55em;height:1.55em;border-radius:50%;background:var(--ink);color:var(--surface);font:700 .9rem/1.6em var(--display);text-align:center}
+.hap{white-space:nowrap}
+.hap i{font-style:normal;letter-spacing:.12em;margin-right:.45em}
+.cat{color:var(--muted)}
+
+/* ---------- colour list + unlock timeline ---------- */
+.colors{list-style:none;margin:10px 0 0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 8px;max-width:420px}
+.colors li{display:grid;justify-items:center;gap:6px;text-align:center;font-size:.9rem;line-height:1.3}
+.colors .cap{width:56px;height:56px;font-size:1.7rem}
+@container (min-width:640px){.colors{grid-template-columns:repeat(8,minmax(0,1fr));max-width:none}}
+.glance{margin-top:44px}
+.glance h4{font:700 1.14rem/1.3 var(--display);margin:0 0 4px}
+.glance>p{margin:0;color:var(--muted);max-width:68ch;font-size:.95rem}
+.timeline{list-style:none;margin:26px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:30px 0}
+.timeline li{position:relative;padding:16px 14px 0 0;border-top:2px solid var(--line);line-height:1.35}
+.timeline li::before{content:"";position:absolute;top:-8px;left:0;width:14px;height:14px;border-radius:50%;background:var(--ink)}
+.timeline li.boost::before{background:var(--paper);border:3.5px solid var(--ink)}
+.timeline .lv{display:block;font:800 1.3rem/1.2 var(--display)}
+.timeline .nm{display:block;font-weight:600;font-size:.95rem}
+.timeline .nm a{color:inherit}
+.timeline .kd{display:block;color:var(--muted);font-size:.84rem}
+
+/* ---------- additional mechanics: panels, tiles, flow chart ---------- */
+code{font:500 .9em/1.3 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--tint);border-radius:6px;padding:1px 6px;white-space:nowrap}
+.gbox code,.node code{background:var(--paper)}
+.ent.sys{padding:28px 0 30px}
+.ent-b>p.lead{margin:0 0 16px}
+.gbox{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px 18px;margin:0 0 14px}
+.gbox:last-child{margin-bottom:0}
+.gbox-h{font:700 1.06rem/1.3 var(--display);margin:0 0 12px}
+.gbox-h small{display:block;font:500 .86rem/1.4 var(--body);color:var(--muted);margin-top:1px}
+.gbox>p{margin:0 0 10px;max-width:68ch}
+.gbox>:last-child{margin-bottom:0}
+.gbox .note{margin:14px 0 0;max-width:none}
+.tiles{list-style:none;margin:0 0 14px;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(136px,1fr));gap:10px}
+.tiles li{background:var(--tint);border-radius:12px;padding:10px 14px 11px;line-height:1.35}
+.tiles .tv{display:block;font:800 1.45rem/1.15 var(--display)}
+.tiles .tk{display:block;font-size:.88rem;color:var(--muted);margin-top:2px}
+.tiles li.hot{background:var(--ink);color:var(--paper)}
+.tiles li.hot .tk{color:inherit;opacity:.85}
+.ent-b>.tiles{max-width:520px;margin-bottom:0}
+.ent-b>.tiles li{background:var(--surface);border:1px solid var(--line)}
+.ent-b>.tiles li.hot{background:var(--ink);border-color:var(--ink)}
+.ent-b>.tiles:has(li:nth-child(4)){max-width:none;margin-bottom:16px}
+.cases{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.cases li{background:var(--tint);border-radius:12px;padding:10px 14px;font-weight:500;line-height:1.4}
+.kv{margin:0}
+.kv>div{padding:11px 0;border-top:1px solid var(--line)}
+.kv>div:first-child{border-top:0;padding-top:0}
+.kv>div:last-child{padding-bottom:0}
+.kv dt{font-weight:600}
+.kv dd{margin:2px 0 0}
+@container (min-width:640px){
+  .kv>div{display:grid;grid-template-columns:140px minmax(0,1fr);gap:18px}
+  .kv dd{margin:0}
+}
+.upm{display:flex;align-items:center;gap:14px;background:var(--tint);border-radius:12px;padding:24px 18px 18px;max-width:460px}
+.upm-w{position:relative}
+.upm-w.bar{flex:1;min-width:0}
+.upm-pin{position:absolute;top:-15px;left:-8px;z-index:1;box-shadow:0 0 0 2px var(--tint)}
+.upm-bar{position:relative;height:26px;border-radius:999px;background:var(--track);overflow:hidden}
+.upm-fill{position:absolute;left:0;top:0;bottom:0;width:60%;background:var(--c3);border-radius:999px}
+.upm-n{position:absolute;inset:0;display:grid;place-items:center;font:800 .95rem/1 var(--display);color:#fff}
+.upm-box{width:48px;height:48px;border-radius:12px;border:2px solid var(--line);background:var(--surface);display:grid;place-items:center}
+.upm-box .cap{font-size:1.3rem}
+.gbox>p.upm-cap{font-size:.86rem;line-height:1.5;color:var(--muted);margin:8px 2px 16px}
+.parts{list-style:none;margin:0;padding:0;display:grid;gap:12px;max-width:68ch}
+.parts li{display:grid;grid-template-columns:26px minmax(0,1fr);gap:12px;align-items:start;line-height:1.5}
+.parts b{display:block;font-weight:600}
+.parts .d{display:block}
+.flow{max-width:660px}
+.node{background:var(--tint);border-radius:12px;padding:10px 14px 11px}
+.node p{margin:0}
+.node .k{display:block;font:600 .82rem/1.4 var(--body);color:var(--muted)}
+.node .cond{font-weight:600;margin-bottom:4px}
+.arrow{text-align:center;color:var(--muted);font-size:1.15rem;line-height:1;padding:5px 0 6px}
+.split{display:grid;gap:8px 12px}
+@container (min-width:600px){.split{grid-template-columns:1fr 1fr}}
+.yn{display:inline-block;font:700 .82rem/1.2 var(--display);border-radius:999px;padding:3px 10px 2px;margin-right:8px;background:var(--ink);color:var(--paper);vertical-align:.08em}
+.yn.no{background:none;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.fx{display:block;margin-top:6px}
+.fx code{white-space:normal;display:inline-block;padding:3px 8px}
+.lvgrid{display:grid;gap:8px;max-width:540px;margin:0 0 14px}
+.lvrow{display:grid;grid-template-columns:clamp(70px,27%,158px) minmax(0,1fr);gap:10px;align-items:center}
+.lvk{font-weight:600;font-size:.88rem;line-height:1.3;color:var(--muted)}
+.lvcells{display:grid;grid-template-columns:repeat(6,minmax(0,52px));gap:clamp(4px,1.2cqi,8px);justify-items:center;align-items:center}
+.lvcells .fr{font:800 clamp(.8rem,3.9cqi,1rem)/1.3 var(--display);white-space:nowrap}
+.lvcells .sq{display:grid;place-items:center;width:100%;aspect-ratio:1;border-radius:10px;background:var(--tint);font:700 1.1rem/1 var(--display)}
+.lvcells .nw{font:700 .76rem/1 var(--display);background:var(--c3);color:#fff;border-radius:999px;padding:4px 8px 3px;white-space:nowrap}
+.ent-b>.tiles+ul.bl{margin-top:16px}
+.note ul.bl{margin-top:6px}
+.note ul.bl>li{margin-bottom:.3em}
+.node ul.bl{margin-top:4px}
+.node ul.bl>li{margin-bottom:.2em}
+.gbox code,.state code{background:var(--paper)}
+
+/* ---------- live-ops state cards ---------- */
+.states{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.state{background:var(--tint);border-radius:12px;padding:12px 14px}
+.state .sn{margin:0 0 6px;font-weight:600;line-height:1.5}
+.state .sn small{display:block;font-weight:500;color:var(--muted);font-size:.86rem}
+.state>p{margin:0 0 8px}
+.go{list-style:none;margin:0;padding:8px 0 0;border-top:1px solid var(--line)}
+.go li{margin:0 0 .25em;padding-left:1.3em;text-indent:-1.3em}
+.go li::before{content:"→ ";color:var(--muted);font-weight:700}
+
+/* ---------- win-screen gauge ---------- */
+.gauge{max-width:400px}
+.gauge svg{display:block;width:100%;height:auto;overflow:visible}
+.gseg{stroke:var(--surface);stroke-width:2;transition:opacity .2s}
+.g2{fill:var(--c2)}.g3{fill:var(--c3)}.g5{fill:var(--c4)}
+.gauge.stopped .gseg:not(.on){opacity:.3}
+.gseg.on{stroke:var(--ink);stroke-width:3}
+.glab{font:800 17px var(--display);text-anchor:middle;fill:#fff;pointer-events:none}
+.glab.l{fill:#18203A}
+.needle{fill:var(--ink)}
+.hub{fill:var(--ink);stroke:var(--surface);stroke-width:3}
+.gbase{margin:6px 0 0;text-align:center;color:var(--muted);font-size:.9rem}
+.gctl{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-top:14px}
+.gctl>span{display:flex;align-items:center;gap:8px}
+.gctl .pinl{width:22px;height:22px;font-size:.8rem;line-height:23px}
+.gbtn{border:1.5px solid var(--ink);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 18px;font-weight:600;cursor:pointer;min-height:40px}
+.gbtn.primary{background:var(--ink);color:var(--paper)}
+.gres{margin:12px 0 0;font-weight:500;min-height:3.2em;max-width:52ch}
+.gres strong{font:800 1.15rem/1.2 var(--display)}
+
+/* ---------- search hits in the page ---------- */
+mark.hit{background:var(--mark);color:#18203A;border-radius:3px;padding:0 1px}
+.flash{animation:flash 1.6s ease-out}
+@keyframes flash{0%,35%{background-color:var(--flash)}100%{background-color:transparent}}
+
+/* ---------- small screens: rail becomes a top bar ---------- */
+@media (max-width:959px){
+  :root{--bar-h:60px}
+  .app{display:block}
+  main{padding-top:28px}
+  .rail{height:auto;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px;padding:8px 10px}
+  .brand{display:none}
+  .menu-btn{order:1;display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:12px;background:rgba(255,255,255,.1);color:inherit;cursor:pointer}
+  .menu-btn svg{width:20px;height:20px}
+  .search{order:2;margin:0}
+  .search input{padding-right:78px}
+  .search input:placeholder-shown{padding-right:10px}
+  .lang{order:3;margin:0}
+  .lang button{padding:11px 11px}
+  .lang .full,.hint.key{display:none}
+  .lang .short{display:inline}
+  .panel{display:none;position:absolute;left:0;right:0;top:100%;max-height:min(70vh,560px);background:var(--rail);
+    border-top:1px solid var(--rail-line);box-shadow:0 22px 36px rgba(8,11,22,.4);padding:10px 10px 18px}
+  .rail[data-open="1"] .panel{display:block}
+  .res-tip{display:none}
+  .sec{margin-top:64px}
+  .sec>h2{font-size:1.8rem}
+  .sec>h2 .cap{width:42px;height:42px;font-size:1.4rem}
+}
+@media (prefers-reduced-motion:reduce){
+  .part{transition:none}
+}
+@media print{
+  .rail,.field-foot{display:none}
+  .app{display:block}
+  main{padding:0;max-width:none}
+  .sec{margin-top:40px}
+  .belt-dot{animation:none}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="cap" viewBox="-50 -50 100 100">
+      <path id="capPath" fill="currentColor"/>
+      <circle r="35" fill="#fff" opacity=".17"/>
+      <circle r="35" fill="none" stroke="#000" stroke-opacity=".12" stroke-width="1.5"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="app">
+  <header class="rail" id="rail" data-view="toc" data-open="">
+    <a class="brand" href="#top">
+      <span class="cap c2"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#cap"/></svg></span>
+      <span>Wool Gather<small id="brandSub">Game design document</small></span>
+    </a>
+    <button class="menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-controls="panel" aria-label="Contents">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h9"/></svg>
+    </button>
+    <div class="lang" id="langSwitch" role="group" aria-label="Language">
+      <button type="button" data-set-lang="en" aria-pressed="true" lang="en"><span class="full">English</span><span class="short">EN</span></button>
+      <button type="button" data-set-lang="vi" aria-pressed="false" lang="vi"><span class="full">Tiếng Việt</span><span class="short">VI</span></button>
+    </div>
+    <div class="search" role="search">
+      <svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4.5 4.5"/></svg>
+      <input id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" placeholder="Search the GDD" aria-label="Search the GDD">
+      <div class="search-r">
+        <span class="hint key" id="hint" aria-hidden="true">/</span>
+        <button class="clr" id="clr" type="button" hidden aria-label="Clear search">×</button>
+      </div>
+    </div>
+    <div class="panel" id="panel">
+      <div id="results"></div>
+      <div class="sr" id="status" role="status"></div>
+      <nav class="toc" id="toc" aria-label="Contents"></nav>
+    </div>
+  </header>
+  <main id="main"></main>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- small helpers ---------- */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const reduceMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const GAME='Wool Gather';  /* PER GAME: the game's name, used in the hero and the tab title */
+const GBASE=40;  /* win-screen base coin reward, matches level_win_coin */
+const PID='wool.gather';  /* PER GAME: product ID prefix for every IAP pack, e.g. 'sushi.sort' gives sushi.sort.starter_pack */
+
+/* crown-cap outline: a real bottle cap has 21 teeth */
+(function(){
+  const teeth=21,steps=teeth*8;let d='';
+  for(let i=0;i<steps;i++){
+    const a=i/steps*Math.PI*2,r=45.4+3.4*Math.cos(teeth*a);
+    d+=(i?'L':'M')+(r*Math.cos(a)).toFixed(2)+' '+(r*Math.sin(a)).toFixed(2);
+  }
+  $('#capPath').setAttribute('d',d+'Z');
+})();
+const cap=(c,label)=>`<span class="cap c${c}" data-nosearch><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#cap"/></svg>${label!=null?`<b>${label}</b>`:''}</span>`;
+
+/* ---------- document outline ---------- */
+const SECTIONS=[
+  {id:'game-mechanics',n:'1',c:1,en:'Game mechanics',vi:'Cơ chế trò chơi',subs:[
+    {id:'gameplay-overview',n:'1.1',en:'Gameplay overview',vi:'Tổng quan lối chơi'},
+    {id:'main-game-mechanics',n:'1.2',en:'Main game mechanics',vi:'Cơ chế chính'},
+    {id:'additional-mechanics',n:'1.3',en:'Additional mechanics',vi:'Cơ chế bổ sung'},
+    {id:'elements-mechanics',n:'1.4',en:'Elements',vi:'Yếu tố đặc biệt'},
+    {id:'booster-mechanics',n:'1.5',en:'Boosters',vi:'Công cụ hỗ trợ'}]},
+  {id:'ftue--tutorial',n:'2',c:2,en:'FTUE & tutorial',vi:'FTUE & hướng dẫn',subs:[
+    {id:'ftue-logic',n:'2.1',en:'FTUE logic',vi:'Cách FTUE hoạt động'},
+    {id:'ftue-steps',n:'2.2',en:'FTUE steps',vi:'Các bước FTUE'},
+    {id:'element-tutorial',n:'2.3',en:'Element tutorial',vi:'Hướng dẫn yếu tố đặc biệt'},
+    {id:'booster-tutorial',n:'2.4',en:'Booster tutorial',vi:'Hướng dẫn công cụ hỗ trợ'}]},
+  {id:'object-set--animation',n:'3',c:3,en:'Object set & animation',vi:'Đối tượng & chuyển động',subs:[
+    {id:'game-concept',n:'3.1',en:'Game concept',vi:'Ý tưởng game'},
+    {id:'core-game-object-concept',n:'3.2',en:'Core game objects',vi:'Đối tượng chính'},
+    {id:'element-object-concept',n:'3.3',en:'Element objects',vi:'Đối tượng yếu tố đặc biệt'},
+    {id:'booster-object-concept',n:'3.4',en:'Booster objects',vi:'Đối tượng công cụ hỗ trợ'}]},
+  {id:'sfx--haptics',n:'4',c:4,en:'SFX & haptics',vi:'Âm thanh & rung'},
+  {id:'remote-config',n:'5',c:5,en:'Remote config',vi:'Cấu hình từ xa'},
+  {id:'iap--offers',n:'6',c:8,en:'IAP & offers',vi:'Mua trong game & ưu đãi',subs:[
+    {id:'pack-list',n:'6.1',en:'Pack list',vi:'Danh sách gói'},
+    {id:'popup-list',n:'6.2',en:'Popup list',vi:'Danh sách popup'},
+    {id:'session-start-popup',n:'6.3',en:'Session-start priority',vi:'Thứ tự popup khi mở game'},
+    {id:'store',n:'6.4',en:'Store',vi:'Cửa hàng'},
+    {id:'starter-pack',n:'6.5',en:'Starter Pack',vi:'Gói Khởi đầu'},
+    {id:'remove-ads',n:'6.6',en:'Remove Ads',vi:'Gỡ quảng cáo'}]},
+  {id:'live-ops',n:'7',c:6,en:'Live ops',vi:'Tính năng Live Ops',subs:[
+    {id:'limited-time-reward',n:'7.1',en:'Limited Time Reward',vi:'Quà giới hạn thời gian'},
+    {id:'skip-level',n:'7.2',en:'Skip Level',vi:'Bỏ qua màn'},
+    {id:'retry-with-booster',n:'7.3',en:'Retry with Booster',vi:'Chơi lại kèm công cụ'}]},
+  {id:'change-note',n:'8',c:7,en:'Change note',vi:'Ghi chú thay đổi'}
+];
+const SEC={};
+SECTIONS.forEach(s=>{SEC[s.id]=s;(s.subs||[]).forEach(u=>{SEC[u.id]=u;});});
+
+const UI={
+  en:{sub:'Game design document',search:'Search the GDD',searchShort:'Search',contents:'Contents',language:'Language',clear:'Clear search',
+      matches:n=>n===1?'1 match':n+' matches',none:q=>`No matches for “${q}”.`,tryShort:'Try a shorter or different word.',
+      other:n=>(n===1?'1 match':n+' matches')+' in the Vietnamese version.',switchTo:'Switch to Tiếng Việt',
+      tip:'Enter jumps to the next match. Esc clears.',overview:'Overview',wip:'In progress',
+      pause:'Pause motion',play:'Play motion',pauseDemo:'Pause demo',playDemo:'Play demo',title:GAME+' GDD',
+      bonus:'Bonus',again:'Swing again',swing:'Swing',next:'Next level',
+      gTap:'Tap Bonus to stop the needle.',gStart:'Tap Swing to start the needle.',
+      gRes:m=>`<strong>×${m}</strong> → ${GBASE} × ${m} = ${GBASE*m} coins. In the game, the rewarded ad plays after a 1-second pause, then the coins fly in.`,
+      gNext:`<strong>${GBASE} coins</strong>. The player skips the bonus and takes the base reward.`},
+  vi:{sub:'Tài liệu thiết kế game',search:'Tìm trong tài liệu',searchShort:'Tìm kiếm',contents:'Mục lục',language:'Ngôn ngữ',clear:'Xóa tìm kiếm',
+      matches:n=>n+' kết quả',none:q=>`Không tìm thấy “${q}”.`,tryShort:'Hãy thử từ khóa ngắn hơn hoặc từ khác.',
+      other:n=>`Có ${n} kết quả trong bản tiếng Anh.`,switchTo:'Chuyển sang English',
+      tip:'Nhấn Enter để tới kết quả kế tiếp. Nhấn Esc để xóa.',overview:'Tổng quan',wip:'Đang viết',
+      pause:'Dừng chuyển động',play:'Chạy chuyển động',pauseDemo:'Dừng minh họa',playDemo:'Chạy minh họa',title:GAME+' GDD',
+      bonus:'Thưởng thêm',again:'Cho kim chạy lại',swing:'Cho kim chạy',next:'Màn tiếp theo',
+      gTap:'Chạm “Thưởng thêm” để dừng kim.',gStart:'Chạm “Cho kim chạy” để kim bắt đầu lắc.',
+      gRes:m=>`<strong>×${m}</strong> → ${GBASE} × ${m} = ${GBASE*m} xu. Trong game, quảng cáo có thưởng sẽ chạy sau 1 giây, rồi xu bay vào.`,
+      gNext:`<strong>${GBASE} xu</strong>. Người chơi bỏ qua phần thưởng thêm và nhận phần thưởng gốc.`}
+};
+
+/* ---------- animated sketches ----------
+   The template's example demos come first, then the Wool Gather demos (tunnel, conveyor, frozen, remove, shuffleW, boost)
+   and the Wool Gather play-screen sketch. Reuse the pattern for a new game:
+     DEMOS key:{D:<loop seconds>, svg:()=>`<markup inside a 200×196 box>`, tracks:()=>[[selector,property,[[time,value],…]],…]}
+     fieldSVG(): an <svg viewBox="0 0 340 466"> with each legend part in <g class="part part-A"> … part-E.
+   Demo keys ready to reuse: elements hidden, locked, linked, door, lockedBox, blockQueue, lockedSlot;
+   boosters hand, shuffle, magnet. */
+/* ---------- play-screen sketch ---------- */
+function rr(x,y,w,h,r){
+  return `M${x+r},${y}H${x+w-r}A${r},${r} 0 0 1 ${x+w},${y+r}V${y+h-r}A${r},${r} 0 0 1 ${x+w-r},${y+h}H${x+r}A${r},${r} 0 0 1 ${x},${y+h-r}V${y+r}A${r},${r} 0 0 1 ${x+r},${y}Z`;
+}
+const LIGHT={4:1,5:1,6:1,8:1};
+const SZ={2:16,3:24,4:32,5:40,6:24};
+function boxSVG(x,y,w,h,c,n){
+  return `<rect class="f${c}" x="${x}" y="${y}" width="${w}" height="${h}" rx="9"/><rect class="lip" x="${x}" y="${y}" width="${w}" height="${h}" rx="9"/>`+
+         `<rect class="f${c}" x="${x}" y="${y}" width="${w}" height="${h-5}" rx="9"/>`+
+         `<text class="bn${LIGHT[c]?' l':''}" x="${x+w/2}" y="${y+(h-5)/2}" dy=".34em">${SZ[n]||n}</text>`;
+}
+function pin(x,y,l){return `<g class="pin"><circle cx="${x}" cy="${y}" r="11"/><text x="${x}" y="${y}" dy=".34em">${l}</text></g>`;}
+/* ---------- element demos: small looping sketches, one per element ---------- */
+const DSX=[19,61,103,145],BW=34,BH=32;
+function T(x,y,s){return `translate(${x}px,${y}px)`+(s!=null?` scale(${s})`:'');}
+function mbox(x,y,c,n){
+  return `<rect class="f${c}" x="${x}" y="${y}" width="${BW}" height="${BH}" rx="8"/><rect class="lip" x="${x}" y="${y}" width="${BW}" height="${BH}" rx="8"/>`+
+         `<rect class="f${c}" x="${x}" y="${y}" width="${BW}" height="${BH-4}" rx="8"/><text class="bn sm${LIGHT[c]?' l':''}" x="${x+BW/2}" y="${y+(BH-4)/2}" dy=".35em">${SZ[n]||n}</text>`;
+}
+function dslots(y,skip){return DSX.map((x,i)=>skip&&skip.includes(i)?'':`<rect class="slot" x="${x}" y="${y}" width="36" height="36" rx="8"/>`).join('');}
+function cdBadge(cx,cy,extra){
+  const vals=['2','1','0'].concat(extra||[]);
+  return `<g class="pin cdg"><circle cx="${cx}" cy="${cy}" r="9.5"/>${vals.map((v,i)=>`<text class="v${i}" x="${cx}" y="${cy}" dy=".35em"${i?' style="opacity:0"':''}>${v.replace(/b$/,'')}</text>`).join('')}</g>`;
+}
+function padlock(cx,cy,ink){return `<g class="padlock${ink?' ink':''}"><path d="M${cx-4.5},${cy-1}v-3.5a4.5,4.5 0 0 1 9,0v3.5"/><rect x="${cx-7}" y="${cy-1}" width="14" height="11" rx="2.5"/></g>`;}
+function cdTracks(sel,a,b){return [[`${sel} .v0`,'opacity',[[0,1],[a,1],[a+.12,0]]],[`${sel} .v1`,'opacity',[[0,0],[a,0],[a+.12,1],[b,1],[b+.12,0]]],[`${sel} .v2`,'opacity',[[0,0],[b,0],[b+.12,1]]]];}
+/* booster demos: a tap ring shows where the player taps, a puff shows a box clearing */
+function tap(cx,cy){return `<circle class="tap" cx="${cx}" cy="${cy}" r="15" style="opacity:0"/>`;}
+function tapTracks(t){return [['.tap','opacity',[[0,0],[t,0],[t+.1,.9],[t+.55,0]]],['.tap','transform',[[t,'scale(.5)'],[t+.55,'scale(1.35)']]]];}
+function puff(cx,cy){return `<g class="smoke">${[[-9,-4,9],[10,-2,10],[0,9,11],[-3,-10,7]].map(([dx,dy,r])=>`<circle cx="${cx+dx}" cy="${cy+dy}" r="${r}" style="opacity:0"/>`).join('')}</g>`;}
+function puffTracks(t){return [['.smoke circle','transform',[[t,'scale(.3)'],[t+.6,'scale(1.4)']]],['.smoke circle','opacity',[[0,0],[t,0],[t+.15,.95],[t+.6,0]]]];}
+const DEMOS={
+  hidden:{D:6.4,
+    svg:()=>dslots(12)+
+      `<g class="a0">${mbox(62,74,2,3)}</g>`+
+      `<g class="qa"><g class="hid"><rect class="hidbox" x="62" y="110" width="${BW}" height="${BH}" rx="8"/><rect class="lip" x="62" y="110" width="${BW}" height="${BH}" rx="8"/><rect class="hidbox" x="62" y="110" width="${BW}" height="${BH-4}" rx="8"/><text class="qmark" x="79" y="124" dy=".35em">?</text></g>`+
+      `<g class="rev" style="opacity:0">${mbox(62,110,6,5)}</g>${mbox(62,146,3,2)}</g>`+
+      `<g>${mbox(104,74,1,4)}${mbox(104,110,5,6)}${mbox(104,146,7,3)}</g>`+
+      `<g class="smoke"><circle cx="68" cy="84" r="10" style="opacity:0"/><circle cx="91" cy="86" r="11" style="opacity:0"/><circle cx="78" cy="99" r="12" style="opacity:0"/><circle cx="74" cy="76" r="8" style="opacity:0"/></g>`,
+    tracks:()=>[
+      ['.a0','transform',[[.5,T(0,0)],[1.3,T(-42,-60)]]],
+      ['.qa','transform',[[1.5,T(0,0)],[2.0,T(0,-36)]]],
+      ['.hid','opacity',[[0,1],[2.45,1],[2.6,0]]],
+      ['.rev','opacity',[[0,0],[2.45,0],[2.6,1]]],
+      ['.smoke circle','transform',[[2.2,'scale(.3)'],[2.95,'scale(1.4)']]],
+      ['.smoke circle','opacity',[[0,0],[2.2,0],[2.35,.95],[2.95,0]]]
+    ]},
+  locked:{D:7.4,
+    svg:()=>`<rect class="trackfill" x="6" y="8" width="188" height="32" rx="16"/>`+
+      [[24,2],[48,5],[72,3],[96,1],[144,8],[168,4]].map(([x,c])=>`<circle class="f${c}" cx="${x}" cy="24" r="7"/>`).join('')+
+      `<circle class="f6 litem" cx="120" cy="24" r="7"/><circle class="ice" cx="120" cy="24" r="10.5"/>`+cdBadge(132,12)+
+      dslots(54)+`<g class="sb">${mbox(20,56,6,1)}</g>`+
+      `<g class="q0">${mbox(62,110,2,3)}</g><g class="q1">${mbox(62,146,3,2)}</g>`,
+    tracks:()=>[
+      ['.q0','transform',[[.6,T(0,0)],[1.3,T(0,-54)]]],
+      ['.q1','transform',[[1.5,T(0,0)],[1.9,T(0,-36)],[2.2,T(0,-36)],[2.9,T(42,-90)]]],
+      ...cdTracks('.cdg',1.3,2.9),
+      ['.cdg','opacity',[[0,1],[3.0,1],[3.3,0]]],
+      ['.ice','transform',[[3.0,'scale(1)'],[3.4,'scale(1.8)']]],
+      ['.ice','opacity',[[0,1],[3.0,1],[3.4,0]]],
+      ['.litem','transform',[[3.6,T(0,0)],[4.3,T(-83,46,.5)]]],
+      ['.litem','opacity',[[0,1],[4.2,1],[4.35,0]]],
+      ['.sb','transform',[[4.4,'scale(1)'],[4.6,'scale(1.12)'],[4.9,'scale(.2)']]],
+      ['.sb','opacity',[[0,1],[4.7,1],[4.9,0]]]
+    ]},
+  linked:{D:7.6,
+    svg:()=>dslots(12)+
+      `<g class="a0">${mbox(40,74,1,4)}</g>`+
+      `<g class="qa"><g class="a1">${mbox(40,110,7,3)}</g><g class="a2">${mbox(40,146,8,2)}</g></g>`+
+      `<g class="b0">${mbox(126,74,2,5)}</g><g class="qb">${mbox(126,110,3,3)}${mbox(126,146,4,4)}</g>`+
+      `<line class="chain chD" x1="74" y1="124" x2="126" y2="88"/>`+
+      `<line class="chain chH" x1="74" y1="88" x2="126" y2="88" style="opacity:0"/>`+
+      `<line class="chain chL" x1="74" y1="88" x2="97" y2="88" style="opacity:0"/><line class="chain chR" x1="103" y1="88" x2="126" y2="88" style="opacity:0"/>`,
+    tracks:()=>[
+      ['.a0','transform',[[.6,T(0,0)],[1.3,T(-20,-60)]]],
+      ['.qa','transform',[[1.5,T(0,0)],[2.0,T(0,-36)]]],
+      ['.chD','opacity',[[0,1],[1.5,1],[1.65,0]]],
+      ['.chH','opacity',[[0,0],[1.9,0],[2.05,1],[2.5,1],[2.55,0]]],
+      ['.chL','opacity',[[0,0],[2.5,0],[2.55,1],[2.95,0]]],['.chL','transform',[[2.5,T(0,0)],[2.95,T(-8,10)]]],
+      ['.chR','opacity',[[0,0],[2.5,0],[2.55,1],[2.95,0]]],['.chR','transform',[[2.5,T(0,0)],[2.95,T(8,10)]]],
+      ['.a1','transform',[[3.2,T(0,0)],[3.9,T(22,-60)]]],
+      ['.a2','transform',[[4.0,T(0,0)],[4.4,T(0,-36)]]],
+      ['.b0','transform',[[4.2,T(0,0)],[4.9,T(-22,-60)]]],
+      ['.qb','transform',[[5.1,T(0,0)],[5.5,T(0,-36)]]]
+    ]},
+  door:{D:8,
+    svg:()=>{
+      const lane=(x,cls,off)=>{let d='';for(let r=0;r<10;r++){for(let k=0;k<2;k++){d+=`<circle class="f${((r*3+k*5+off)%8)+1}" cx="${x+11+k*18}" cy="${-102+r*18}" r="6.5"/>`;}}return `<g clip-path="url(#dm-${cls})"><g class="${cls}">${d}</g></g>`;};
+      let cv='';for(let i=0;i<16;i++)cv+=`<circle class="f${((i*5)%8)+1}" cx="${-24+i*16}" cy="85" r="6"/>`;
+      return `<defs><clipPath id="dm-flL"><rect x="36" y="0" width="40" height="66"/></clipPath><clipPath id="dm-flR"><rect x="124" y="0" width="40" height="66"/></clipPath><clipPath id="dm-cv"><rect x="6" y="70" width="188" height="30" rx="15"/></clipPath></defs>`+
+        `<rect class="trackfill" x="36" y="0" width="40" height="76"/><rect class="trackfill" x="124" y="0" width="40" height="76"/>`+
+        `<rect class="trackfill" x="6" y="70" width="188" height="30" rx="15"/>`+
+        lane(36,'flL',0)+lane(124,'flR',3)+`<g clip-path="url(#dm-cv)"><g class="cv">${cv}</g></g>`+
+        `<rect class="door dL" x="31" y="61" width="50" height="9" rx="3" style="opacity:0"/>`+
+        `<g class="pin cdL" style="opacity:0"><circle cx="84" cy="58" r="9.5"/><text x="84" y="58" dy=".35em">2</text></g>`+
+        `<rect class="door dR" x="119" y="61" width="50" height="9" rx="3"/>`+cdBadge(172,58)+
+        dslots(112)+`<g class="sd0">${mbox(62,160,2,3)}</g><g class="sd1">${mbox(104,160,3,2)}</g>`;},
+    tracks:()=>[
+      ['.flL','transform',[[0,T(0,0),'linear'],[3.5,T(0,54)]]],
+      ['.flR','transform',[[0,T(0,0)],[3.9,T(0,0),'linear'],[7.4,T(0,54)]]],
+      ['.cv','transform',[[0,T(0,0),'linear'],[8,T(32,0)]]],
+      ['.sd0','transform',[[1.1,T(0,0)],[1.8,T(-42,-46)]]],
+      ['.sd1','transform',[[2.5,T(0,0)],[3.2,T(-42,-46)]]],
+      ...cdTracks('.cdg',1.8,3.2),
+      ['.cdg','opacity',[[0,1],[3.4,1],[3.6,0]]],
+      ['.dR','opacity',[[0,1],[3.4,1],[3.7,0]]],['.dR','transform',[[3.4,T(0,0)],[3.7,T(0,-8)]]],
+      ['.dL','opacity',[[0,0],[3.5,0],[3.8,1]]],['.dL','transform',[[3.5,T(0,-8)],[3.8,T(0,0)]]],
+      ['.cdL','opacity',[[0,0],[3.7,0],[3.95,1]]],['.cdL','transform',[[3.7,T(0,-6)],[3.95,T(0,0)]]]
+    ]},
+  lockedBox:{D:7.4,
+    svg:()=>dslots(12)+
+      `<g class="a0">${mbox(40,74,6,5)}</g><g class="qa">${mbox(40,110,8,3)}${mbox(40,146,5,2)}</g>`+
+      `<g class="lock"><rect class="veil" x="40" y="74" width="${BW}" height="${BH}" rx="8"/>${padlock(57,88)}</g>`+cdBadge(74,74)+
+      `<g class="b0">${mbox(126,74,2,3)}</g><g class="b1">${mbox(126,110,3,4)}</g><g class="b2">${mbox(126,146,1,2)}</g>`,
+    tracks:()=>[
+      ['.b0','transform',[[.6,T(0,0)],[1.3,T(-106,-60)]]],
+      ['.b1','transform',[[1.5,T(0,0)],[1.9,T(0,-36)],[2.2,T(0,-36)],[2.9,T(-64,-96)]]],
+      ['.b2','transform',[[1.5,T(0,0)],[1.9,T(0,-36)],[3.0,T(0,-36)],[3.4,T(0,-72)]]],
+      ...cdTracks('.cdg',1.3,2.9),
+      ['.cdg','opacity',[[0,1],[3.0,1],[3.3,0]]],
+      ['.lock','opacity',[[0,1],[3.0,1],[3.3,0]]],
+      ['.a0','transform',[[3.7,T(0,0)],[4.4,T(64,-60)]]],
+      ['.qa','transform',[[4.6,T(0,0)],[5.0,T(0,-36)]]]
+    ]},
+  blockQueue:{D:8,
+    svg:()=>dslots(12)+
+      `<g class="q1a">${mbox(24,74,6,5)}</g><g class="q1r">${mbox(24,110,8,3)}${mbox(24,146,1,2)}</g>`+
+      `<g class="q2a">${mbox(83,74,2,3)}</g><g class="q2r">${mbox(83,110,3,4)}${mbox(83,146,7,2)}</g>`+
+      `<g class="q3a">${mbox(142,74,4,4)}</g><g class="q3r">${mbox(142,110,5,3)}${mbox(142,146,2,6)}</g>`+
+      `<g class="bar"><rect class="veil" x="19" y="68" width="44" height="114" rx="9"/>${padlock(41,124)}${cdBadge(41,68,['2b'])}</g>`,
+    tracks:()=>[
+      ['.q2a','transform',[[.6,T(0,0)],[1.3,T(-21,-60)]]],
+      ['.q2r','transform',[[1.5,T(0,0)],[1.9,T(0,-36)]]],
+      ['.q3a','transform',[[2.1,T(0,0)],[2.8,T(-38,-60)]]],
+      ['.q3r','transform',[[3.0,T(0,0)],[3.4,T(0,-36)]]],
+      ['.cdg .v0','opacity',[[0,1],[1.3,1],[1.42,0]]],
+      ['.cdg .v1','opacity',[[0,0],[1.3,0],[1.42,1],[2.8,1],[2.92,0]]],
+      ['.cdg .v2','opacity',[[0,0],[2.8,0],[2.92,1],[3.1,1],[3.25,0]]],
+      ['.cdg .v3','opacity',[[0,0],[3.8,0],[3.95,1]]],
+      ['.bar','transform',[[3.1,T(0,0)],[3.9,T(59,0)]]],
+      ['.q1a','transform',[[4.2,T(0,0)],[4.9,T(-4,-60)]]],
+      ['.q1r','transform',[[5.1,T(0,0)],[5.5,T(0,-36)]]]
+    ]},
+  lockedSlot:{D:7.6,
+    svg:()=>dslots(12)+
+      `<g class="lk"><rect class="lkslot" x="61" y="12" width="36" height="36" rx="8"/>${padlock(79,29,true)}${cdBadge(97,12)}</g>`+
+      `<g class="a0">${mbox(40,74,1,4)}</g><g class="qa"><g class="a1">${mbox(40,110,2,3)}</g><g class="a2">${mbox(40,146,4,2)}</g></g>`+
+      `<g class="b0">${mbox(126,74,3,5)}</g><g class="qb">${mbox(126,110,7,2)}${mbox(126,146,8,4)}</g>`,
+    tracks:()=>[
+      ['.a0','transform',[[.6,T(0,0)],[1.3,T(-20,-60)]]],
+      ['.qa','transform',[[1.5,T(0,0)],[1.9,T(0,-36)]]],
+      ['.b0','transform',[[2.1,T(0,0)],[2.5,T(-11,-76)],[2.9,T(-22,-60)]]],
+      ...cdTracks('.cdg',1.3,2.9),
+      ['.lk','opacity',[[0,1],[3.0,1],[3.35,0]]],
+      ['.qb','transform',[[3.1,T(0,0)],[3.5,T(0,-36)]]],
+      ['.a1','transform',[[3.8,T(0,0)],[4.5,T(22,-60)]]],
+      ['.a2','transform',[[4.7,T(0,0)],[5.1,T(0,-36)]]]
+    ]},
+  /* ----- booster demos ----- */
+  hand:{D:5.6, /* tap any box in the queues: it jumps to a slot and clears at once */
+    svg:()=>dslots(12)+mbox(20,14,5,3)+
+      mbox(40,74,1,4)+mbox(40,110,7,3)+mbox(40,146,8,2)+
+      mbox(126,74,2,5)+mbox(126,110,3,3)+
+      `<g class="pk">${mbox(126,146,6,4)}</g>`+tap(143,161)+puff(79,30),
+    tracks:()=>[
+      ...tapTracks(.7),
+      ['.pk','transform',[[1.1,T(0,0)],[1.4,T(0,-6,1.12)],[2.2,T(-64,-132,1.12)],[2.5,T(-64,-132)],[3.3,T(-64,-132)],[3.6,T(-64,-132,.2)]]],
+      ['.pk','opacity',[[0,1],[3.45,1],[3.6,0]]],
+      ...puffTracks(3.35)
+    ]},
+  shuffle:{D:5.4, /* the queues mix, and a box that matches the conveyor comes to the top */
+    svg:()=>{
+      const grid=(cols)=>cols.map((cs,k)=>cs.map((c,r)=>mbox([24,83,142][k],74+r*36,c,[4,3,2][r])).join('')).join('');
+      return dslots(12)+mbox(20,14,5,3)+
+        `<rect class="trackfill" x="6" y="53" width="188" height="15" rx="7.5"/>`+
+        [2,5,2,7,2,4,2,5,2].map((c,i)=>`<circle class="f${c}" cx="${20+i*20}" cy="60.5" r="4.2"/>`).join('')+
+        `<g class="old">${grid([[1,8,6],[7,4,2],[3,1,8]])}</g>`+
+        `<g class="new" style="opacity:0">${mbox(24,74,8,3)+mbox(24,110,1,3)+mbox(24,146,6,2)}<g class="nt">${mbox(83,74,2,4)}</g>${mbox(83,110,7,3)+mbox(83,146,3,2)+mbox(142,74,4,4)+mbox(142,110,8,3)+mbox(142,146,1,2)}</g>`+
+        tap(100,126)+puff(100,126);},
+    tracks:()=>[
+      ...tapTracks(.6),
+      ['.old','transform',[[1.0,'scale(1)'],[1.4,'scale(.55) rotate(-8deg)']]],
+      ['.old','opacity',[[0,1],[1.3,1],[1.45,0]]],
+      ...puffTracks(1.15),
+      ['.new','opacity',[[0,0],[1.45,0],[1.6,1]]],
+      ['.new','transform',[[1.45,'scale(.55) rotate(8deg)'],[1.9,'scale(1)']]],
+      ['.nt','transform',[[2.6,T(0,0)],[3.3,T(-21,-60)]]]
+    ]},
+  magnet:{D:5.6, /* tap a box in a slot: it pulls in its matching items and clears, freeing the slot */
+    svg:()=>{
+      const xs=[22,44,66,88,110,132,154,176],cs=[1,2,5,8,2,4,2,7];
+      return dslots(12)+mbox(20,14,5,3)+`<g class="mg">${mbox(62,14,2,4)}</g>`+mbox(104,14,6,2)+
+        `<rect class="trackfill" x="6" y="60" width="188" height="28" rx="14"/>`+
+        xs.map((x,i)=>`<circle class="f${cs[i]}${cs[i]===2?' m'+i:''}" cx="${x}" cy="74" r="6.5"/>`).join('')+
+        `<g class="nq">${mbox(62,110,7,3)}</g>`+mbox(62,146,1,2)+mbox(126,110,4,5)+mbox(126,146,8,3)+
+        tap(79,30)+puff(79,30);},
+    tracks:()=>[
+      ...tapTracks(.6),
+      ...[[1,44],[4,110],[6,154]].flatMap(([i,x],k)=>[
+        [`.m${i}`,'transform',[[1.1+k*.15,T(0,0)],[1.7+k*.15,T(79-x,-44,.4)]]],
+        [`.m${i}`,'opacity',[[0,1],[1.65+k*.15,1],[1.75+k*.15,0]]]]),
+      ['.mg','transform',[[2.2,'scale(1)'],[2.4,'scale(1.12)'],[2.7,'scale(.2)']]],
+      ['.mg','opacity',[[0,1],[2.55,1],[2.7,0]]],
+      ...puffTracks(2.4),
+      ['.nq','transform',[[3.3,T(0,0)],[4.0,T(0,-96)]]]
+    ]},
+  /* ----- Wool Gather demos ----- */
+  tunnel:{D:5.6, /* the box at the exit goes to a slot, the next box comes out, the counter drops */
+    svg:()=>dslots(12)+mbox(20,128,3,'')+mbox(146,128,5,'')+
+      `<rect class="trackfill" x="64" y="122" width="72" height="56" rx="14"/><rect class="lkslot" x="76" y="118" width="48" height="10" rx="5"/>`+
+      `<g class="tn0">${mbox(83,82,2,'')}</g><g class="tn1" style="opacity:0">${mbox(83,82,6,'')}</g><g class="tn2" style="opacity:0">${mbox(83,82,4,'')}</g>`+
+      cdBadge(138,126)+ring(100,98,'r1'),
+    tracks:()=>[
+      ...ringsTracks('.r1',[.5,2.5]),
+      ['.tn0','transform',[[.9,T(0,0,1)],[1.6,T(-63,-68,1)]]],
+      ['.tn1','opacity',[[0,0],[1.6,0],[1.75,1]]],
+      ['.tn1','transform',[[1.6,T(0,24,.3)],[1.95,T(0,0,1)],[2.9,T(0,0,1)],[3.6,T(-21,-68,1)]]],
+      ['.tn2','opacity',[[0,0],[3.6,0],[3.75,1]]],
+      ['.tn2','transform',[[3.6,T(0,24,.3)],[3.95,T(0,0,1)]]],
+      ...cdTracks('.cdg',1.6,3.6)
+    ]},
+  conveyor:{D:6, /* boxes ride the belt; one tapped inside the zone goes to a slot and the counter drops */
+    svg:()=>{
+      const cs=[2,5,6,3,4,2,5];
+      return dslots(12)+
+        `<rect class="trackfill" x="0" y="98" width="200" height="44"/>`+
+        `<g class="cvb">${cs.map((c,i)=>`<g${i===2?' class="cvp"':''}>${mbox(-30+i*40,104,c,'')}</g>`).join('')}</g>`+
+        `<rect x="0" y="92" width="34" height="56" rx="8" style="fill:var(--veil)"/><rect x="166" y="92" width="34" height="56" rx="8" style="fill:var(--veil)"/>`+
+        `<rect class="slot" x="42" y="92" width="116" height="56" rx="10"/>`+
+        `<g class="pin"><circle cx="100" cy="168" r="11"/><text class="n0" x="100" y="168" dy=".35em">7</text><text class="n1" x="100" y="168" dy=".35em" style="opacity:0">6</text></g>`+
+        ring(82,120,'r1');},
+    tracks:()=>[
+      ['.cvb','transform',[[0,T(0,0),'linear'],[6,T(60,0)]]],
+      ...ringsTracks('.r1',[1.5]),
+      ['.cvp','transform',[[1.9,T(0,0)],[2.6,T(-14,-90),'linear'],[6,T(-48,-90)]]],
+      ['.n0','opacity',[[0,1],[2.6,1],[2.7,0]]],
+      ['.n1','opacity',[[0,0],[2.6,0],[2.7,1]]]
+    ]},
+  frozen:{D:6.4, /* a free box hits the frozen box and bounces back; the ice breaks and both boxes can go up */
+    svg:()=>dslots(12)+mbox(20,100,5,'')+mbox(146,100,8,'')+
+      `<g class="fz">${mbox(83,100,6,'')}<g class="fzi"><rect x="81" y="98" width="38" height="36" rx="9" style="fill:#BFE6F5;opacity:.72"/><rect class="ice" x="81" y="98" width="38" height="36" rx="9"/></g></g>`+
+      `<g class="fa">${mbox(83,154,2,'')}</g>`+ring(100,170,'r1')+ring(100,116,'r2')+puff(100,116),
+    tracks:()=>[
+      ...ringsTracks('.r1',[.5,3.9]),
+      ['.fa','transform',[[.9,T(0,0)],[1.2,T(0,-20)],[1.6,T(0,0)],[4.3,T(0,0)],[5.0,T(-21,-140)]]],
+      ['.fzi','opacity',[[0,1],[1.2,1],[1.35,0]]],
+      ['.fzi','transform',[[1.2,'scale(1)'],[1.4,'scale(1.3)']]],
+      ...puffTracks(1.2),
+      ...ringsTracks('.r2',[2.4]),
+      ['.fz','transform',[[2.8,T(0,0)],[3.5,T(-63,-86)]]]
+    ]},
+  remove:{D:5.6, /* tap a box: it flies into the dragon head and the segments of its color are removed */
+    svg:()=>{
+      const cs=[2,6,2,3,2,6,4,3];
+      return wgDragon(30,cs,(c,i)=>c===2?'rm'+i:'')+dslots(64)+mbox(20,66,3,'')+
+        mbox(40,118,5,'')+`<g class="rmb">${mbox(83,118,2,'')}</g>`+mbox(126,118,4,'')+
+        mbox(40,154,6,'')+mbox(83,154,3,'')+mbox(126,154,8,'')+
+        tap(100,134)+puff(180,30);},
+    tracks:()=>[
+      ...tapTracks(.5),
+      ['.rmb','transform',[[.9,T(0,0,1)],[1.1,T(0,-6,1.12)],[1.9,T(80,-104,.4)]]],
+      ['.rmb','opacity',[[0,1],[1.85,1],[1.95,0]]],
+      ...puffTracks(1.9),
+      ...[0,2,4].flatMap((i,k)=>[
+        [`.rm${i}`,'opacity',[[0,1],[2.1+k*.12,1],[2.35+k*.12,0]]],
+        [`.rm${i}`,'transform',[[2.1+k*.12,'scale(1)'],[2.35+k*.12,'scale(.2)']]]])
+    ]},
+  shuffleW:{D:5.4, /* the dragon's colors shuffle; segments that match the boxes in the slots move to the head */
+    svg:()=>{
+      const a=[2,4,6,5,3,4,6,2],b=[2,6,5,2,6,4,3,4];
+      const segs=(cs,cls)=>cs.map((c,i)=>`<circle class="f${c}${cls&&i>4?' p'+i:''}" cx="${16+i*20}" cy="30" r="8"/>`).join('');
+      return `<rect class="trackfill" x="4" y="17" width="192" height="26" rx="13"/>`+
+        `<g class="sa">${segs(a)}</g><g class="sb" style="opacity:0">${segs(b,1)}</g>`+wgHead(180,30)+
+        dslots(64)+mbox(20,66,3,'')+mbox(62,66,4,'')+
+        `<circle class="lkslot" cx="100" cy="150" r="22"/><text class="qmark" x="100" y="150" dy=".35em" style="fill:var(--ink)">⇄</text>`+
+        tap(100,150);},
+    tracks:()=>[
+      ...tapTracks(.5),
+      ['.sa','transform',[[.9,'scale(1)'],[1.3,'scale(1,.2)']]],
+      ['.sa','opacity',[[0,1],[1.2,1],[1.3,0]]],
+      ['.sb','opacity',[[0,0],[1.3,0],[1.4,1]]],
+      ['.sb','transform',[[1.3,'scale(1,.2)'],[1.7,'scale(1)']]],
+      ...[[6,-99],[5,-37],[7,-77]].flatMap(([i,dx],k)=>[
+        [`.p${i}`,'transform',[[2.3+k*.2,T(0,0,1)],[2.9+k*.2,T(dx,52,.4)]]],
+        [`.p${i}`,'opacity',[[0,1],[2.85+k*.2,1],[2.95+k*.2,0]]]])
+    ]},
+  boost:{D:6, /* the wind blows the fog away; the box can now pull a segment that was hidden in the fog */
+    svg:()=>{
+      const cs=[3,2,6,5,3,5,4,6];
+      return wgDragon(30,cs,(c,i)=>i===1?'bp':'')+
+        `<g class="fog">${wgFog(0,0,104,58,true)}</g>`+
+        `<g class="wind" style="opacity:0"><path class="tap" d="M10 20q25 -10 50 0t50 0"/><path class="tap" d="M20 44q25 -10 50 0t50 0"/></g>`+
+        dslots(64)+mbox(20,66,2,'')+
+        `<circle class="lkslot" cx="100" cy="150" r="22"/><text class="qmark" x="100" y="150" dy=".35em" style="fill:var(--ink)">≋</text>`+
+        tap(100,150);},
+    tracks:()=>[
+      ...tapTracks(.5),
+      ['.wind','opacity',[[0,0],[.9,0],[1.0,.8],[1.8,0]]],
+      ['.wind','transform',[[.9,T(-20,0)],[1.8,T(40,0)]]],
+      ['.fog','transform',[[1.0,T(0,0)],[1.8,T(-110,0)]]],
+      ['.fog','opacity',[[0,1],[1.5,1],[1.8,0]]],
+      ['.bp','transform',[[2.4,T(0,0,1)],[3.0,T(1,52,.4)]]],
+      ['.bp','opacity',[[0,1],[2.95,1],[3.05,0]]]
+    ]}
+};
+/* Wool Gather sketch parts: the dragon (a row of wool segments with a head), the fog, the robot */
+function wgHead(x,y){return `<g class="wg-head"><circle class="f7" cx="${x}" cy="${y}" r="11"/><circle cx="${x+3}" cy="${y-3}" r="2.6" style="fill:#fff"/></g>`;}
+function wgDragon(y,cols,cls){
+  return `<rect class="trackfill" x="4" y="${y-13}" width="192" height="26" rx="13"/>`+
+    cols.map((c,i)=>{const k=cls&&cls(c,i);return `<circle class="f${c}${k?' '+k:''}" cx="${16+i*20}" cy="${y}" r="8"/>`;}).join('')+wgHead(180,y);
+}
+function wgFog(x,y,w,h,side){
+  let s=`<rect x="${x}" y="${y}" width="${w}" height="${h}"/>`;
+  if(side)for(let cy=y+8;cy<y+h;cy+=20)s+=`<circle cx="${x+w}" cy="${cy}" r="12"/>`;
+  else for(let cx=x+14;cx<x+w;cx+=28)s+=`<circle cx="${cx}" cy="${y+h}" r="14"/>`;
+  return `<g style="fill:var(--line);opacity:.96">${s}</g>`;
+}
+function robot(cx,cy){
+  return `<rect class="lkslot" x="${cx-14}" y="${cy-13}" width="28" height="26" rx="7"/>`+
+    `<circle cx="${cx-6}" cy="${cy-2}" r="3" style="fill:var(--ink)"/><circle cx="${cx+6}" cy="${cy-2}" r="3" style="fill:var(--ink)"/>`+
+    `<line x1="${cx}" y1="${cy-13}" x2="${cx}" y2="${cy-20}" style="stroke:var(--ink);stroke-width:2"/><circle cx="${cx}" cy="${cy-22}" r="2.6" style="fill:var(--ink)"/>`;
+}
+/* a tap ring with its own class, for demos with more than one tap spot; ringsTracks shows it at each time in ts */
+function ring(cx,cy,cls){return `<circle class="tap ${cls}" cx="${cx}" cy="${cy}" r="15" style="opacity:0"/>`;}
+function ringsTracks(sel,ts){
+  const o=[[0,0]],s=[[0,'scale(.5)']];
+  ts.forEach(t=>{o.push([t,0],[t+.1,.9],[t+.55,0]);s.push([t,'scale(.5)'],[t+.55,'scale(1.35)'],[t+.56,'scale(.5)']);});
+  return [[sel,'opacity',o],[sel,'transform',s]];
+}
+/* play-screen sketch: the dragon crawls from the fog along the track toward the robot; slots and the box pile below */
+function fieldSVG(label){
+  const path='M330 40H55a35 35 0 0 0 0 70H285a35 35 0 0 1 0 70H140';
+  const seq=[2,2,6,4,4,3,6,2];
+  let body='';
+  seq.forEach((c,j)=>{body+=`<path class="belt-dot s${c}" d="${path}" pathLength="48" stroke-dasharray="0.001 7.999" style="--o:${-j}px;stroke-width:15"/>`;});
+  const track=`<path class="track" d="${path}H26" style="stroke-width:26;stroke-linecap:round"/>`;
+  const head=`<circle class="f7" cx="136" cy="180" r="13"/><circle cx="131" cy="176" r="3" style="fill:#fff"/>`;
+  const bot=`<circle class="slot" cx="40" cy="180" r="15"/>`+robot(88,182);
+  let slots='';
+  [31,89,147,205].forEach(x=>{slots+=`<rect class="slot" x="${x}" y="236" width="46" height="46" rx="10"/>`;});
+  slots+=`<rect class="lkslot" x="263" y="236" width="46" height="46" rx="10"/>`+padlock(286,256,true);
+  slots+=boxSVG(34,240,40,38,2,'')+boxSVG(92,240,40,38,6,'');
+  const pile=[[30,306,70,4],[106,306,50,5],[162,306,92,3],[260,306,52,2],
+              [56,352,92,6],[154,352,60,2],[220,352,70,3],
+              [84,398,60,4],[150,398,100,5]];
+  let boxes='';
+  pile.forEach(([x,y,w,c])=>{boxes+=boxSVG(x,y,w,40,c,'');});
+  return `<svg viewBox="0 0 340 466" role="img" aria-label="${esc(label)}">
+    <g class="part part-B">${track}${body}${head}${pin(210,110,'B')}</g>
+    <g class="part part-A">${bot}${pin(88,214,'A')}</g>
+    <g class="part part-C">${wgFog(0,0,340,58)}${pin(170,26,'C')}</g>
+    <g class="part part-D">${slots}${pin(16,259,'D')}</g>
+    <g class="part part-E">${boxes}${pin(16,372,'E')}</g>
+  </svg>`;
+}
+
+/* ---------- win-screen bonus gauge ---------- */
+const MULT=[2,3,5,3,2],GX=130,GY=132,GR=112,Gr=60;
+const f1=n=>+(+n).toFixed(1);
+function gaugeSVG(label){
+  const P=(rad,deg)=>{const a=deg*Math.PI/180;return [f1(GX+rad*Math.cos(a)),f1(GY-rad*Math.sin(a))];};
+  let s='';
+  MULT.forEach((m,i)=>{
+    const a1=180-36*i,a2=180-36*(i+1);
+    const [x1,y1]=P(GR,a1),[x2,y2]=P(GR,a2),[x3,y3]=P(Gr,a2),[x4,y4]=P(Gr,a1);
+    s+=`<path class="gseg g${m}" data-seg="${i}" d="M${x1} ${y1}A${GR} ${GR} 0 0 1 ${x2} ${y2}L${x3} ${y3}A${Gr} ${Gr} 0 0 0 ${x4} ${y4}Z"/>`;
+    const [lx,ly]=P((GR+Gr)/2,(a1+a2)/2);
+    s+=`<text class="glab${m===5?' l':''}" x="${lx}" y="${ly}" dy=".35em">×${m}</text>`;
+  });
+  return `<svg viewBox="0 0 260 146" role="img" aria-label="${esc(label)}">${s}
+    <g id="needle"><path class="needle" d="M${GX-4} ${GY}L${GX} ${GY-GR+8}L${GX+4} ${GY}Z"/></g><circle class="hub" cx="${GX}" cy="${GY}" r="10"/>
+    ${pin(12,22,'A')}${pin(GX+28,GY+2,'B')}</svg>`;
+}
+const G={swing:!reduceMotion,th:0,t0:0,raf:0,res:null};
+const PERIOD=1.7,AMP=84;
+const segOf=th=>Math.max(0,Math.min(4,Math.floor((th+90)/36)));
+function gaugeMsg(l){
+  const ui=UI[l];
+  if(G.res==='bonus')return ui.gRes(MULT[segOf(G.th)]);
+  if(G.res==='next')return ui.gNext;
+  return G.swing?ui.gTap:ui.gStart;
+}
+function setNeedle(){const n=document.getElementById('needle');if(n)n.setAttribute('transform',`rotate(${G.th.toFixed(2)} ${GX} ${GY})`);}
+function gaugeTick(ts){
+  if(!G.swing){G.raf=0;return;}
+  if(!G.t0)G.t0=ts;
+  G.th=AMP*Math.sin((ts-G.t0)/1000*Math.PI*2/PERIOD);
+  setNeedle();
+  G.raf=requestAnimationFrame(gaugeTick);
+}
+function startSwing(){
+  const ph=Math.asin(Math.max(-1,Math.min(1,G.th/AMP)));
+  G.t0=performance.now()-ph/(Math.PI*2/PERIOD)*1000;
+  G.swing=true;
+  if(!G.raf)G.raf=requestAnimationFrame(gaugeTick);
+}
+function gaugeUI(){
+  const g=$('#gauge');if(!g)return;
+  const ui=UI[lang];
+  g.classList.toggle('stopped',!G.swing);
+  const on=!G.swing&&G.res==='bonus'?segOf(G.th):-1;
+  $$('.gseg',g).forEach(p=>p.classList.toggle('on',+p.dataset.seg===on));
+  const b=$('#gBonus');if(b)b.textContent=G.swing?ui.bonus:(G.res?ui.again:ui.swing);
+  const r=$('#gRes');if(r)r.innerHTML=gaugeMsg(lang);
+  setNeedle();
+}
+
+/* ---------- page content (English, Vietnamese) ---------- */
+let paused=false;
+function view(l){
+  const vi=l==='vi';
+  const t=(en,v)=>vi?v:en;
+  const ui=UI[l];
+  const ul=items=>`<ul class="bl">${items.map(i=>`<li>${i}</li>`).join('')}</ul>`;
+  const ol=items=>`<ol class="steps">${items.map(i=>`<li>${i}</li>`).join('')}</ol>`;
+  const params=items=>`<ul class="params">${items.map(([a,b])=>`<li><b>${a}</b><span>${b}</span></li>`).join('')}</ul>`;
+  const nm=(en,v)=>vi?`${v} <span class="orig">${en}</span>`:en;
+  const ent=(name,body,tags,dm)=>`<div class="ent"><div class="ent-h"><h4>${name}</h4>${tags?`<p class="tags">${[].concat(tags).map(x=>`<span>${x}</span>`).join(' ')}</p>`:''}${dm||''}</div><div class="ent-b">${body}</div></div>`;
+  const defs=pairs=>`<dl class="defs">${pairs.map(([a,b])=>`<div class="blk"><dt>${a}</dt><dd>${b}</dd></div>`).join('')}</dl>`;
+  const table=(label,heads,rows,cls)=>`<div class="tbl ${cls||''}" tabindex="0" role="region" aria-label="${esc(label)}"><table><thead><tr>${heads.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>i===0?`<th scope="row">${c}</th>`:`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  const popup=(text,v)=>`<span class="popup" lang="en">${text}</span>${vi?`<span class="gloss">${v}</span>`:''}`;
+  const dash=`<span class="dash">–</span>`;
+  const lvl=n=>`<span class="lvl">${n}</span>`;
+  const tbd=`<span class="dash">${t('TBD','Chưa chốt')}</span>`;
+  const wip=`<span class="wip">${ui.wip}</span>`;
+  const unlock=n=>t(`Unlocks at level ${n}`,`Mở ở màn ${n}`);
+  const unlockB=n=>[unlock(n),t(`3 free`,`Tặng 3 lượt`)];
+  const hap=n=>n?`<span class="hap"><i aria-hidden="true" data-nosearch>${'●'.repeat(n)+'○'.repeat(3-n)}</i>${[0,t('Weak','Nhẹ'),t('Medium','Vừa'),t('Strong','Mạnh')][n]}</span>`:dash;
+
+  /* placeholder: shows as a dashed box until it is replaced with the game's real content */
+  const ph=(en,v)=>`<span class="ph">${t(en,v)}</span>`;
+
+  /* names reused across sections: rename to the game's elements and boosters, add or remove keys as needed */
+  const N={
+    el1:nm('Tunnel','Đường hầm'),el2:nm('Conveyor','Băng chuyền'),el3:nm('Frozen Box','Hộp đóng băng'),
+    bo1:nm('Remove','Loại bỏ'),bo2:nm('Shuffle','Xáo trộn'),bo3:nm('Boost','Xua sương')
+  };
+  const P={ /* plain names for running text and tables */
+    el1:t('Tunnel','Đường hầm'),el2:t('Conveyor','Băng chuyền'),el3:t('Frozen Box','Hộp đóng băng'),
+    bo1:t('Remove','Loại bỏ'),bo2:t('Shuffle','Xáo trộn'),bo3:t('Boost','Xua sương')
+  };
+  const withEl=t('With elements','Khi gặp yếu tố đặc biệt');
+
+  const B={};
+
+  /* ===== 1. Game mechanics ===== */
+  /* PER GAME: 1.1, 1.2, 1.4 and 1.5 describe this game's own rules. */
+  B['gameplay-overview']=
+    ent(t('How it plays','Cách chơi'),ul([
+      t(`The player taps boxes in the pile to send them up to the parking slots. Each box pulls wool segments of its own color out of the dragon’s body.`,
+        `Người chơi chạm vào các hộp trong đống hộp để đưa chúng lên ô đỗ. Mỗi hộp kéo các đốt len cùng màu ra khỏi thân con rồng.`),
+      t(`Each segment pulled out slows the dragon down. A full box leaves the level and frees its slot for the next box.`,
+        `Mỗi đốt bị kéo ra làm con rồng chậm lại. Hộp đầy sẽ rời khỏi màn và nhường ô đỗ cho hộp tiếp theo.`)
+    ]))+
+    ent(t('Win and lose','Thắng và thua'),params([
+      [t('Win','Thắng'),t(`Every segment is pulled out of the dragon’s body before it reaches the robot.`,
+                          `Kéo hết mọi đốt ra khỏi thân rồng trước khi rồng chạm tới robot.`)],
+      [t('Lose','Thua'),t(`The dragon reaches the robot at the robot’s final backdown position. This is a temporary loss (stuck). The revive popup shows after 3 seconds.`,
+                          `Rồng chạm tới robot khi robot đang ở vị trí lùi cuối cùng. Đây là thua tạm thời (bị kẹt). Popup hồi sinh hiện sau 3 giây.`)]
+    ]))+
+    ent(nm('Revive','Hồi sinh'),ul([
+      t(`When stuck, the player can revive with coins or a rewarded ad.`,
+        `Khi bị kẹt, người chơi có thể hồi sinh bằng xu hoặc xem quảng cáo có thưởng.`),
+      t(`Revive clears every parking slot: each box in a slot is removed, together with the exact number of matching segments needed to fill that box.`,
+        `Hồi sinh dọn sạch mọi ô đỗ: mỗi hộp trong ô bị loại bỏ, kèm đúng số đốt cùng màu cần để lấp đầy hộp đó.`),
+      t(`The dragon is pushed back to its starting point.`,
+        `Con rồng bị đẩy lùi về điểm xuất phát.`),
+      t(`Each level starts with a base revive cost. The cost rises with each revive in that level, up to the max number of revives per level. Exact numbers: TBD.`,
+        `Mỗi màn bắt đầu với một mức giá hồi sinh gốc. Giá tăng sau mỗi lần hồi sinh trong màn đó, cho tới khi chạm số lần hồi sinh tối đa mỗi màn. Con số cụ thể: Chưa chốt.`),
+      t(`First-time freebie: the very first revive in the player’s whole lifetime is free, whatever the level.`,
+        `Lần đầu miễn phí: lần hồi sinh đầu tiên trong suốt quá trình chơi của người chơi được miễn phí, ở bất kỳ màn nào.`),
+      t(`The revive cost and limits are in remote config (section 5).`,`Giá và giới hạn hồi sinh nằm trong cấu hình từ xa (mục 5).`)
+    ]));
+
+  B['main-game-mechanics']=
+    ent(nm('Box','Hộp'),ul([
+      t(`At level start, the boxes sit stacked in a pile. Each box has 2 properties: color and size. Size is how many segments it can hold. Size values: TBD.`,
+        `Khi bắt đầu màn, các hộp xếp chồng thành một đống. Mỗi hộp có 2 thuộc tính: màu và kích cỡ. Kích cỡ là số đốt hộp chứa được. Các mức kích cỡ: Chưa chốt.`),
+      t(`The player taps boxes one at a time to send them to a parking slot.`,
+        `Người chơi chạm từng hộp một để đưa lên ô đỗ.`),
+      t(`In its slot, the box scans the dragon along the open area (not covered by fog). It finds segments of its color, pulls them out and stores them in its free spaces.`,
+        `Khi đã vào ô, hộp quét dọc thân rồng trong vùng mở (không bị sương che). Hộp tìm các đốt cùng màu, kéo chúng ra và cất vào chỗ trống của mình.`),
+      t(`When the box is full, it leaves the level and frees the slot for the next box.`,
+        `Khi hộp đầy, hộp rời khỏi màn và nhường ô đỗ cho hộp tiếp theo.`),
+      t('Moving','Di chuyển')+':'+ul([
+        t(`When sent, the box scans the slots from left to right and moves to the first free one.`,
+          `Khi được đưa đi, hộp quét các ô đỗ từ trái sang phải và đi tới ô trống đầu tiên.`),
+        t(`If no slot is free, the box stays where it is and the game shows “Need to unlock more slots”.`,
+          `Nếu không còn ô trống, hộp đứng yên tại chỗ và trò chơi hiện thông báo “Need to unlock more slots” (Cần mở thêm ô).`)
+      ])
+    ]))+
+    ent(nm('Dragon','Con rồng'),ul([
+      t(`The dragon is the main challenge. The player must clear every segment before it reaches the robot.`,
+        `Con rồng là thử thách chính. Người chơi phải dọn hết các đốt trước khi rồng chạm tới robot.`),
+      t(`Starting point: normally 6 segments out from the fog area (inside the fog on some levels). At level start, the dragon speeds up to reach it, then slows to normal speed.`,
+        `Điểm xuất phát: thường cách vùng sương 6 đốt (một số màn nằm trong vùng sương). Khi bắt đầu màn, rồng tăng tốc để tới điểm này, rồi giảm về tốc độ bình thường.`),
+      t(`By default, the dragon moves at a constant, linear speed.`,
+        `Mặc định, rồng di chuyển với tốc độ đều, không đổi.`),
+      t(`Each time a segment is removed:`,`Mỗi lần một đốt bị lấy ra:`)+ol([
+        t(`The dragon stops for a moment.`,`Rồng tạm dừng lại.`),
+        t(`Every segment from the head to the removed one moves backward, so the dragon joins up into one line again.`,
+          `Mọi đốt từ đầu rồng tới chỗ đốt vừa bị lấy ra lùi lại, để rồng nối lại thành một hàng liền.`),
+        t(`If the head has already reached the starting point, the head stays still and the body moves up to close the gap instead. This keeps at least 6 segments in the open area for the player to attack.`,
+          `Nếu đầu rồng đã tới điểm xuất phát, đầu rồng đứng yên và phần thân tiến lên để lấp chỗ trống. Nhờ vậy luôn có ít nhất 6 đốt trong vùng mở để người chơi tấn công.`)
+      ]),
+      t(`If the dragon reaches the robot at the robot’s final backdown position, the game is over (stuck).`,
+        `Nếu rồng chạm tới robot khi robot đang ở vị trí lùi cuối cùng, người chơi thua (bị kẹt).`)
+    ]))+
+    ent(nm('Robot','Robot'),ul([
+      t(`The robot is the character the player must protect. It stands at the end of the dragon’s track.`,
+        `Robot là nhân vật người chơi phải bảo vệ. Robot đứng ở cuối đường đi của rồng.`),
+      t(`On some levels the robot has several backdown positions.`,
+        `Ở một số màn, robot có nhiều vị trí lùi.`),
+      t(`When the dragon reaches the robot at one position, the dragon pauses, the robot moves to its next backdown position, and then the dragon carries on along the line.`,
+        `Khi rồng chạm tới robot ở một vị trí, rồng tạm dừng, robot lùi về vị trí tiếp theo, sau đó rồng tiếp tục bò theo đường đi.`),
+      t(`If the dragon reaches the robot at its final backdown position, the level is a temporary loss. The revive popup shows after 3 seconds.`,
+        `Nếu rồng chạm tới robot ở vị trí lùi cuối cùng, người chơi thua tạm thời. Popup hồi sinh hiện sau 3 giây.`)
+    ]))+
+    ent(nm('Fog','Sương mù'),ul([
+      t(`The fog covers part of the upper half of the screen.`,
+        `Sương mù che một phần nửa trên màn hình.`),
+      t(`Boxes in the parking slots cannot scan or match segments inside the fog.`,
+        `Hộp trong ô đỗ không quét được và không ghép được với các đốt nằm trong sương.`),
+      t(`Segments inside the fog can still be cleared in two ways:`,`Các đốt trong sương vẫn dọn được theo hai cách:`)+ul([
+        t(`${P.bo1}: use it on a box whose color matches the segments in the fog, to clear those segments.`,
+          `${P.bo1}: dùng lên một hộp cùng màu với các đốt trong sương để dọn các đốt đó.`),
+        t(`${P.bo3}: clears the fog for a while, so boxes can scan and match the hidden segments as normal.`,
+          `${P.bo3}: xua tan sương trong một khoảng thời gian, để hộp quét và ghép các đốt bị che như bình thường.`)
+      ])
+    ]));
+
+  /* FIXED: 1.3 is shared logic across projects. Keep it as it is and only change the numbers. */
+
+  /* 1.3 uses panels, tiles and a small flow chart so each system and each of its parts stands apart */
+  const sys=(name,body,tags)=>ent(name,body,tags).replace('<div class="ent">','<div class="ent sys">');
+  const panel=(title,body,sub)=>`<div class="gbox"><h5 class="gbox-h blk">${title}${sub?`<small>${sub}</small>`:''}</h5>${body}</div>`;
+  const tiles=items=>`<ul class="tiles">${items.map(([v,k,cls])=>`<li${cls?` class="${cls}"`:''}><span class="tv">${v}</span><span class="tk">${k}</span></li>`).join('')}</ul>`;
+  const kv=pairs=>`<dl class="kv">${pairs.map(([k,v])=>`<div class="blk"><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>`;
+  const lead=x=>`<p class="lead">${x}</p>`;
+
+  B['additional-mechanics']=
+    sys(nm('Heart system (lives)','Hệ thống tim'),
+      lead(t(`The heart system limits how many times the player can lose and replay the game within a certain span of time.`,
+             `Hệ thống tim giới hạn số lần người chơi có thể thua và chơi lại trong một khoảng thời gian.`))+
+      panel(t('Maximum and refill','Số tim tối đa và hồi tim'),
+        tiles([
+          ['5',t('Maximum lives','Số tim tối đa')],
+          [t('20 min','20 phút'),t('To refill one life','Để hồi 1 tim')]
+        ])+ul([
+          t(`Each player has a maximum of 5 lives.`,`Mỗi người chơi có tối đa 5 tim.`),
+          t(`When the player has fewer than 5 lives, the system refills them automatically. Each life takes 20 minutes to refill.`,
+            `Khi người chơi có ít hơn 5 tim, hệ thống tự động hồi tim. Mỗi tim cần 20 phút để hồi.`),
+          t(`Once the player is back at 5 lives, the refill countdown stops.`,
+            `Khi đã đủ 5 tim trở lại, đồng hồ đếm ngược hồi tim sẽ dừng.`)
+        ]))+
+      panel(t('Losing lives','Mất tim'),
+        `<p>${t(`The player loses a life when they:`,`Người chơi mất tim khi:`)}</p>
+         <ul class="cases">
+           <li>${t(`Lose a level and restart it`,`Thua màn và chơi lại màn đó`)}</li>
+           <li>${t(`Choose to restart the level manually`,`Tự chọn chơi lại màn`)}</li>
+           <li>${t(`Exit to the home screen`,`Thoát về màn hình chính`)}</li>
+         </ul>`)+
+      panel(t('Unlimited lives','Tim vô hạn'),
+        ul([
+          t(`Unlimited lives come from IAP packs, for a set time (see the Unlimited lives column in 6.1).`,
+            `Tim vô hạn đến từ các gói IAP, trong một khoảng thời gian nhất định (xem cột Tim vô hạn ở mục 6.1).`),
+          t(`While they are active, the player loses no life: losing, restarting the level and exiting to Home are all free.`,
+            `Trong thời gian này, người chơi không bị mất tim: thua, chơi lại màn hay thoát về màn hình chính đều không tốn tim.`),
+          t(`The heart on the HUD shows an ∞ icon with the timer in place of the life count.`,
+            `Biểu tượng tim trên HUD hiện dấu ∞ kèm đồng hồ, thay cho số tim.`),
+          t(`The timer counts down in real time, also while the game is closed.`,
+            `Đồng hồ đếm ngược theo giờ thực, kể cả khi game đang tắt.`),
+          t(`A new grant while the timer is running adds its time to the time left (2 h left + a 6 h pack = 8 h).`,
+            `Nếu nhận thêm tim vô hạn khi đồng hồ còn chạy, thời gian mới được cộng dồn vào thời gian còn lại (còn 2 giờ + gói 6 giờ = 8 giờ).`),
+          t(`When the timer ends, the HUD shows the normal life count again, and the 20-minute refill carries on as usual.`,
+            `Khi hết giờ, HUD hiện lại số tim bình thường, và việc hồi tim 20 phút tiếp tục như thường lệ.`)
+        ])+
+        `<p>${t('The timer shows the time left in one of three formats:','Đồng hồ hiện thời gian còn lại theo một trong ba dạng:')}</p>`+
+        table(t('Unlimited lives timer format','Định dạng đồng hồ tim vô hạn'),
+          [t('Time left','Thời gian còn lại'),t('Format','Định dạng'),t('Example','Ví dụ')],
+          [[t('≥ 1 day','≥ 1 ngày'),'<code>xxd</code>','<code>2d</code>'],
+           [t('≥ 1 hour','≥ 1 giờ'),'<code>xxh yym</code>','<code>12h 23m</code>'],
+           [t('< 1 hour','< 1 giờ'),'<code>mm:ss</code>','<code>15:12</code>']],'compact')))+
+
+    sys(nm('Element unlock progress system','Thanh tiến độ mở khóa yếu tố'),
+      lead(t(`A progress bar on the Victory screen that shows the player how many levels are left until the next element unlocks.`,
+             `Một thanh tiến độ trên màn hình chiến thắng, cho người chơi thấy còn bao nhiêu màn nữa thì mở khóa yếu tố tiếp theo.`))+
+      panel(t('UI components','Thành phần giao diện'),
+        `<div class="upm" role="img" data-nosearch aria-label="${esc(t('Sketch of the module: part A is a progress bar filled to 3 of 5, part B is a square icon box at its right end.','Hình minh họa: phần A là thanh tiến độ đang ở mức 3 trên 5, phần B là ô vuông chứa biểu tượng ở đầu bên phải.'))}">
+           <div class="upm-w bar"><span class="pinl upm-pin">A</span><div class="upm-bar"><div class="upm-fill"></div><span class="upm-n">3/5</span></div></div>
+           <div class="upm-w"><span class="pinl upm-pin">B</span><div class="upm-box">${cap(7,'?')}</div></div>
+         </div>
+         <p class="upm-cap">${t('Simplified sketch. It shows the bar after level 7 in the example below.','Hình minh họa đơn giản: thanh tiến độ sau màn 7 trong ví dụ bên dưới.')}</p>
+         <ul class="parts">
+           <li><span class="pinl" data-nosearch>A</span><span><b>${nm('Progress bar','Thanh tiến độ')}</b><span class="d">${t(
+             `A horizontal track with a green fill gauge. The step count <code>{current}/{total}</code> is centered on it.`,
+             `Một thanh nằm ngang, phần đã đạt được tô màu xanh lá. Số bước dạng <code>{current}/{total}</code> (hiện tại/tổng) nằm ở giữa thanh.`)}</span></span></li>
+           <li><span class="pinl" data-nosearch>B</span><span><b>${nm('Feature icon box','Ô biểu tượng')}</b><span class="d">${t(
+             `A square frame at the right end that shows the next element to be unlocked.`,
+             `Một khung vuông ở đầu bên phải, hiện yếu tố sắp được mở khóa tiếp theo.`)}</span></span></li>
+         </ul>`)+
+      panel(t('Flow and progression logic','Cách hoạt động'),
+        `<div class="flow">
+           <div class="node"><p><span class="k">${t('Trigger','Khi nào chạy')}</span>${t(
+             `The Victory screen loads after level N is completed.`,
+             `Màn hình chiến thắng hiện lên sau khi người chơi hoàn thành màn N.`)}</p></div>
+           <div class="arrow" aria-hidden="true" data-nosearch>↓</div>
+           <div class="node"><p><span class="k">${t('Check','Kiểm tra')}</span>${t(
+             `Is there an upcoming feature milestone for the player's current level?`,
+             `Với màn hiện tại của người chơi, còn mốc mở khóa tính năng nào sắp tới không?`)}</p></div>
+           <div class="arrow" aria-hidden="true" data-nosearch>↓</div>
+           <div class="split">
+             <div class="node"><p class="cond"><span class="yn no">${t('No','Không')}</span>${t(`All features are already unlocked`,`Mọi tính năng đều đã mở khóa`)}</p>
+               <p>${t(`Hide the entire module and re-center the remaining UI.`,`Ẩn toàn bộ phần này và căn giữa lại các phần giao diện còn lại.`)}</p></div>
+             <div class="node"><p class="cond"><span class="yn">${t('Yes','Có')}</span>${t(`An active target is found`,`Còn mốc cần đạt`)}</p>
+               <p>${t(`Calculate how far the bar is filled, using Total and Current (see Fill calculation).`,`Tính mức đầy của thanh từ hai con số Tổng và Hiện tại (xem phần Cách tính mức đầy của thanh).`)}</p></div>
+           </div>
+         </div>`,
+        t('State resolution (on screen load)','Xác định trạng thái (khi màn hình hiện lên)'))+
+      panel(t('Fill calculation','Cách tính mức đầy của thanh'),
+        kv([
+          [nm('Total','Tổng'),t(`The levels from the previous feature unlock (or from level 1) up to the level just before the next feature unlock.`,
+                              `Số màn tính từ mốc mở khóa trước đó (hoặc từ màn 1) tới màn ngay trước mốc mở khóa tiếp theo.`)+
+            `<span class="fx"><code>${t('total = next unlock level − previous unlock level','tổng = màn mở khóa tiếp theo − màn mở khóa trước đó')}</code></span>`],
+          [nm('Current','Hiện tại'),t(`How many of those levels the player has completed.`,
+                                    `Trong các màn đó, người chơi đã hoàn thành bao nhiêu màn.`)+
+            `<span class="fx"><code>${t('current = completed level − previous unlock level + 1','hiện tại = màn vừa hoàn thành − màn mở khóa trước đó + 1')}</code></span>`]
+        ]))+
+      panel(t('Example','Ví dụ'),
+        `<div class="lvgrid">
+           <div class="lvrow blk"><span class="lvk">${t('Progress bar shows','Thanh tiến độ hiện')}</span><div class="lvcells">${
+             [5,6,7,8,9].map((n,i)=>`<span class="fr">${i+1}/5<span class="sr"> ${t('after level','sau màn')} ${n}, </span></span>`).join('')}<span></span></div></div>
+           <div class="lvrow blk"><span class="lvk">${t('Level','Màn')}</span><div class="lvcells">${
+             [5,6,7,8,9,10].map(n=>`<span class="sq">${n}<span class="sr">, </span></span>`).join('')}</div></div>
+           <div class="lvrow blk"><span class="lvk">${t('New element unlocks','Mở yếu tố mới')}</span><div class="lvcells">${
+             [5,6,7,8,9,10].map(n=>n===5||n===10?`<span class="nw">${t('New','Mới')}<span class="sr"> ${t('at level','ở màn')} ${n}, </span></span>`:'<span></span>').join('')}</div></div>
+         </div>`+
+        ul([
+          t(`An element unlocks at level 5 and the next one at level 10.`,
+            `Một yếu tố mở ở màn 5, yếu tố tiếp theo mở ở màn 10.`),
+          t(`The bar shows each number after the player completes that level. After level 7, it shows “3/5”.`,
+            `Thanh hiện mỗi con số sau khi người chơi hoàn thành màn tương ứng. Sau màn 7, thanh hiện “3/5”.`)
+        ])))+
+
+    sys(nm('Reward ads slot (RV Slot)','Ô quảng cáo thưởng'),
+      lead(t(`RV Slots let the player watch a rewarded ad to earn an extra slot in the level.`,
+             `Ô quảng cáo thưởng (RV Slot) cho phép người chơi xem quảng cáo có thưởng để nhận thêm một ô trong màn chơi.`))+
+      tiles([
+        ['4',t('Default slots in a level','Số ô có sẵn trong mỗi màn')],
+        ['6',t('Maximum slots in a level with RV Slots','Số ô tối đa mỗi màn khi dùng ô quảng cáo thưởng')]
+      ])+ul([
+        t(`A level normally has 4 slots by default. Some special levels are an exception.`,
+          `Thông thường mỗi màn có sẵn 4 ô, trừ một số màn đặc biệt.`),
+        t(`RV Slots can raise the number of available slots to a maximum of 6 per level.`,
+          `Ô quảng cáo thưởng có thể tăng số ô dùng được lên tối đa 6 ô mỗi màn.`),
+        t(`Each RV Slot unlocks 1 extra parking slot for the current level only. When it is bought with coins or a rewarded ad, the player still has to activate it manually.`,
+          `Mỗi lần mở ô quảng cáo thưởng cho thêm 1 ô đỗ, chỉ trong màn đang chơi. Khi mua bằng xu hoặc quảng cáo có thưởng, người chơi vẫn phải tự kích hoạt.`)
+      ]));
+
+  /* the win screen bonus is the last system in 1.3 */
+  B['additional-mechanics']+=
+    sys(nm('Win screen bonus','Thưởng thêm ở màn hình thắng'),
+      lead(t(`On the win screen, the player can multiply the level’s coin reward by watching a rewarded ad. A swinging needle picks the multiplier, which turns the ad into a small moment of timing and luck.`,
+             `Ở màn hình thắng, người chơi có thể nhân số xu thưởng của màn bằng cách xem một quảng cáo có thưởng. Một cây kim lắc qua lại sẽ chọn hệ số nhân, khiến việc xem quảng cáo giống một trò thử vận may nho nhỏ.`))+
+      panel(t('Try it','Thử ngay'),
+        `<div class="gauge${G.swing?'':' stopped'}" id="gauge">${gaugeSVG(t('Half-circle bonus gauge with five segments: ×2, ×3, ×5, ×3, ×2, and a needle from the bottom center.','Đồng hồ thưởng hình bán nguyệt gồm năm ô: ×2, ×3, ×5, ×3, ×2, kim nằm ở giữa phía dưới.'))}
+           <p class="gbase">${t(`Base reward: ${GBASE} coins`,`Phần thưởng gốc: ${GBASE} xu`)}</p></div>
+         <div class="gctl" data-nosearch>
+           <span><span class="pinl" aria-hidden="true">C</span><button type="button" class="gbtn primary" id="gBonus">${G.swing?ui.bonus:(G.res?ui.again:ui.swing)}</button></span>
+           <span><span class="pinl" aria-hidden="true">D</span><button type="button" class="gbtn" id="gNext">${ui.next}</button></span>
+         </div>
+         <p class="gres" id="gRes" aria-live="polite" data-nosearch>${gaugeMsg(l)}</p>`,
+        t('A sketch for trying the feel. Speed and odds here are not final.','Bản minh họa để thử cảm giác. Tốc độ và tỉ lệ ở đây chưa phải thông số chính thức.'))+
+      panel(t('Where it sits','Vị trí'),
+        kv([[t('Screen','Màn hình'),t(`Victory screen`,`Màn hình chiến thắng`)],
+            [t('Position','Chỗ đặt'),t(`Between the element unlock progress bar and the Bonus button.`,`Nằm giữa thanh tiến độ mở khóa yếu tố và nút Thưởng thêm (Bonus).`)]]))+
+      panel(t('Parts','Thành phần'),
+        `<ul class="parts">
+          <li><span class="pinl" data-nosearch>A</span><span><b>${nm('Bonus gauge','Đồng hồ thưởng')}</b><span class="d">${t(`A half circle split into 5 segments, left to right: ×2 | ×3 | ×5 | ×3 | ×2. The ×5 segment sits in the center.`,`Hình bán nguyệt chia thành 5 ô, từ trái sang phải: ×2 | ×3 | ×5 | ×3 | ×2. Ô ×5 nằm chính giữa.`)}</span></span></li>
+          <li><span class="pinl" data-nosearch>B</span><span><b>${nm('Needle','Kim chỉ')}</b><span class="d">${t(`Sits at the bottom center and keeps swinging left and right across the gauge.`,`Nằm ở giữa phía dưới, liên tục lắc qua trái rồi qua phải trên đồng hồ.`)}</span></span></li>
+          <li><span class="pinl" data-nosearch>C</span><span><b>${nm('Bonus button','Nút Thưởng thêm')}</b><span class="d">${t(`Has a video icon. Stops the needle and plays the rewarded ad.`,`Có biểu tượng video. Dừng kim lại và phát quảng cáo có thưởng.`)}</span></span></li>
+          <li><span class="pinl" data-nosearch>D</span><span><b>${nm('Next Level button','Nút Màn tiếp theo')}</b><span class="d">${t(`Skips the bonus. The player takes the base reward only.`,`Bỏ qua phần thưởng thêm. Người chơi chỉ nhận phần thưởng gốc.`)}</span></span></li>
+        </ul>`)+
+      panel(t('Flow','Diễn biến'),ol([
+        t(`The win screen opens and shows the base coin reward (for example ${GBASE}). The needle starts swinging.`,`Màn hình thắng mở ra và hiện số xu thưởng gốc (ví dụ ${GBASE}). Kim bắt đầu lắc.`),
+        t(`The moment the player taps <b>Bonus</b>, the needle stops. The segment it points at becomes this level’s multiplier.`,`Ngay khi người chơi chạm <b>Thưởng thêm</b>, kim dừng lại. Ô mà kim chỉ vào chính là hệ số nhân của màn này.`),
+        t(`After a 1-second pause so the player can see the result, the rewarded ad plays.`,`Sau 1 giây để người chơi kịp thấy kết quả, quảng cáo có thưởng bắt đầu chạy.`),
+        t(`When the ad ends, the reward animation plays with the multiplied amount (needle on ×3 → ${GBASE} × 3 = ${GBASE*3} coins).`,`Khi quảng cáo kết thúc, hiệu ứng nhận thưởng chạy với số xu đã nhân (kim dừng ở ×3 → ${GBASE} × 3 = ${GBASE*3} xu).`),
+        t(`If the player taps <b>Next Level</b> instead, they get the base reward and move on.`,`Nếu người chơi chạm <b>Màn tiếp theo</b>, họ nhận phần thưởng gốc và qua màn.`)
+      ]))+
+      panel(t('Edge cases','Trường hợp đặc biệt'),ul([
+        t(`Ad closed early or failed to load: the player gets the base reward only, with no multiplier.`,`Quảng cáo bị tắt sớm hoặc không tải được: người chơi chỉ nhận phần thưởng gốc, không được nhân.`),
+        t(`No ad available: the Bonus button looks disabled. The needle still swings but does nothing.`,`Không có quảng cáo: nút Thưởng thêm hiện ở trạng thái mờ. Kim vẫn lắc nhưng không có tác dụng.`),
+        t(`Daily ad limit for the multiplier reached: hide the gauge and the Bonus button, and re-center the rest of the screen.`,`Đã hết số lần xem quảng cáo nhân thưởng trong ngày: ẩn đồng hồ và nút Thưởng thêm, căn giữa lại phần còn lại của màn hình.`),
+        t(`Lock every input on the win screen during the 1-second pause and the ad, so double taps do nothing.`,`Khóa mọi thao tác trên màn hình thắng trong 1 giây chờ và lúc quảng cáo chạy, để chạm hai lần không gây lỗi.`)
+      ])+`<p class="note">${t(`Swing speed, each segment’s multiplier and the daily ad limit are remote config, so the chance of hitting ×5 can be tuned without a new build.`,`Tốc độ lắc của kim, hệ số của từng ô và giới hạn quảng cáo mỗi ngày đều nằm trong cấu hình từ xa, nên có thể chỉnh tỉ lệ trúng ×5 mà không cần ra bản mới.`)}</p>`));
+
+  /* PER GAME: one caption per entry in DEMOS, same keys. The first ten are the template's example demos. */
+  const DCAP={
+    hidden:t('The box reaches the top of its queue and reveals its color.','Hộp lên tới đầu hàng chờ và hiện màu.'),
+    locked:t('Two boxes are sent, the number hits 0 and the item can be picked.','Đưa 2 hộp lên, con số về 0 và vật phẩm được nhặt.'),
+    linked:t('Both boxes reach the top, the link breaks and they can be sent.','Hai hộp cùng lên đầu hàng chờ, liên kết được gỡ và cả hai được đưa lên.'),
+    door:t('Two boxes are sent, the number hits 0 and the doors swap.','Đưa 2 hộp lên, con số về 0 và hai cửa đổi trạng thái.'),
+    lockedBox:t('Other boxes are sent until the number hits 0, then the box can go up.','Đưa các hộp khác lên tới khi con số về 0, sau đó hộp được đưa lên.'),
+    blockQueue:t('Other queues send two boxes, then the block moves to another queue.','Các hàng khác đưa 2 hộp lên, sau đó vật chặn chuyển sang hàng khác.'),
+    lockedSlot:t('A box skips the locked slot. When the number hits 0, the slot opens.','Hộp bỏ qua ô bị khóa. Khi con số về 0, ô được mở.'),
+    hand:t('The player taps a box deep in a queue. It jumps to a slot and clears at once.','Người chơi chạm vào một hộp nằm sâu trong hàng chờ. Hộp nhảy lên ô và được dọn ngay.'),
+    shuffle:t('The queues mix, and a box that matches the conveyor comes to the top.','Các hàng chờ được xáo lại, một hộp hợp màu với băng chuyền được đưa lên đầu.'),
+    magnet:t('The player taps a box in a slot. It pulls in its matching items, clears and frees the slot.','Người chơi chạm vào một hộp trong ô. Hộp hút hết vật phẩm cùng màu, biến mất và nhường lại ô.'),
+    tunnel:t('The box at the exit goes to a slot, the next box comes out, and the counter drops.','Hộp ở cửa ra lên ô đỗ, hộp tiếp theo chui ra và con số đếm giảm.'),
+    conveyor:t('Boxes ride the belt. The player taps one inside the zone, it goes to a slot, and the counter drops.','Hộp chạy theo băng chuyền. Người chơi chạm một hộp trong vùng cho phép, hộp lên ô đỗ và con số đếm giảm.'),
+    frozen:t('A free box hits the frozen box and bounces back. The ice breaks, and both boxes can go up.','Một hộp thường đâm vào hộp đóng băng rồi bật về. Băng vỡ, cả hai hộp đều đưa lên được.'),
+    remove:t('The player taps a blue box. It flies into the dragon head, and blue segments are removed.','Người chơi chạm một hộp xanh. Hộp bay vào đầu rồng và các đốt xanh bị loại bỏ.'),
+    shuffleW:t('The dragon’s colors shuffle. Segments that match the boxes in the slots move to the head, and the boxes pull them.','Màu các đốt rồng được xáo lại. Các đốt cùng màu với hộp trong ô đỗ được đưa lên gần đầu rồng, rồi hộp kéo chúng ra.'),
+    boost:t('The wind blows the fog away. The box can now pull a segment that was hidden in the fog.','Gió thổi tan sương. Hộp giờ kéo được đốt trước đó bị sương che.')
+  };
+  /* demo(key) shows DEMOS[key] with its DCAP caption; pass a caption as the second argument to override it */
+  const demo=(k,c)=>{const cp=c||DCAP[k]||'';return DEMOS[k]?`<figure class="demo" data-demo="${k}"><div class="demo-box"><svg viewBox="0 0 200 196" role="img" aria-label="${esc(cp.replace(/<[^>]+>/g,''))}"><g class="scene">${DEMOS[k].svg()}</g></svg>`+
+    `<button type="button" class="demo-btn" aria-pressed="false" aria-label="${esc(ui.pauseDemo)}"><svg class="i-pause" viewBox="0 0 12 12" aria-hidden="true"><rect x="1.5" y="1" width="3" height="10" rx="1"/><rect x="7.5" y="1" width="3" height="10" rx="1"/></svg><svg class="i-play" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 1.2v9.6L10.5 6z"/></svg></button></div>`+
+    `<figcaption>${cp}</figcaption></figure>`:'';};
+  /* PER GAME: one ent per element: ent(N.key, ul([...rules]), unlock(level), demo('key')) */
+  B['elements-mechanics']=
+    ent(N.el1,ul([
+      t(`A fixed portal that holds a queue of boxes inside. A counter shows how many boxes are left inside.`,
+        `Một cổng cố định chứa một hàng hộp bên trong. Con số đếm cho biết còn bao nhiêu hộp bên trong.`),
+      t(`The tunnel always keeps one box ready at its exit portal.`,
+        `Đường hầm luôn giữ sẵn một hộp ở cửa ra.`),
+      t(`When the box at the exit is sent to a parking slot, the next box comes out at the exit at once.`,
+        `Khi hộp ở cửa ra được đưa lên ô đỗ, hộp tiếp theo lập tức chui ra cửa.`),
+      t(`Boxes still inside the tunnel cannot be tapped, and ${P.bo1} cannot target them.`,
+        `Hộp còn trong đường hầm không chạm được, và ${P.bo1} cũng không chọn được chúng.`)
+    ]),unlock(7),demo('tunnel'))+
+    ent(N.el2,ul([
+      t(`A moving belt that carries several boxes. A counter shows the total boxes left on the belt.`,
+        `Một băng chuyền đang chạy, chở nhiều hộp. Con số đếm cho biết tổng số hộp còn trên băng.`),
+      t(`The player can tap boxes only inside a preset zone on the belt, the same way as normal boxes.`,
+        `Người chơi chỉ chạm được các hộp nằm trong một vùng định sẵn trên băng, giống như với hộp thường.`),
+      t(`The two ends of the belt sit at the two sides of the screen. Boxes in those end parts cannot be tapped.`,
+        `Hai đầu băng chuyền nằm ở hai bên màn hình. Không chạm được các hộp đang ở hai đầu này.`),
+      t(`The preset zone stays inside the play area, away from the screen edges, so narrow screens still work.`,
+        `Vùng định sẵn nằm trong khu vực chơi, không tràn ra mép màn hình, để màn hình hẹp vẫn chơi được.`),
+      t(`Loop: a box that reaches the end of the belt despawns and respawns at the start, so the belt keeps looping.`,
+        `Chạy vòng: hộp tới cuối băng sẽ biến mất rồi xuất hiện lại ở đầu băng, để băng chuyền chạy liên tục.`)
+    ]),unlock(12),demo('conveyor'))+
+    ent(N.el3,ul([
+      t(`A box locked in ice. It cannot be tapped or sent to a parking slot.`,
+        `Một hộp bị khóa trong băng. Không chạm được và không đưa lên ô đỗ được.`),
+      t(`To break the ice, the player sends a free box into it: the free box hits the frozen box along its movement path.`,
+        `Để phá băng, người chơi đưa một hộp thường đâm vào nó: hộp thường va vào hộp đóng băng trên đường di chuyển.`),
+      t(`On impact the ice breaks, and the attacking box bounces back to its starting position.`,
+        `Khi va chạm, băng vỡ, và hộp tấn công bật về vị trí ban đầu.`),
+      t(`Once free, the box behaves like a normal box.`,
+        `Sau khi hết băng, hộp hoạt động như hộp thường.`)
+    ]),unlock(17),demo('frozen'))+
+    ent(nm('Fail-safe','Cơ chế chống kẹt'),ul([
+      t(`The source GDD does not define a fail-safe for these elements. TBD.`,
+        `GDD gốc chưa mô tả cơ chế chống kẹt cho các yếu tố này. Chưa chốt.`),
+      t(`Cases to confirm:`,`Các trường hợp cần xác nhận:`)+ol([
+        t(`Only frozen boxes are left, and no free box can reach them to break the ice.`,
+          `Chỉ còn lại hộp đóng băng, và không còn hộp thường nào có thể đâm vỡ băng.`),
+        t(`The boxes left cannot hold all the segments still on the dragon.`,
+          `Các hộp còn lại không đủ chỗ chứa hết số đốt còn trên thân rồng.`)
+      ])
+    ])).replace('<div class="ent">','<div class="ent" id="lock-fail-safe">');
+
+  const buy=t(`Bought with coins or a rewarded ad. The player still has to activate it manually.`,
+              `Mua bằng xu hoặc xem quảng cáo có thưởng. Người chơi vẫn phải tự kích hoạt.`);
+  /* PER GAME: one ent per booster: ent(N.key, ul([...]), unlockB(level), demo('key')) */
+  B['booster-mechanics']=
+    ent(N.bo1,ul([
+      t(`The player picks any single box on the board and destroys it at once. Boxes already in the parking slots cannot be picked.`,
+        `Người chơi chọn một hộp bất kỳ trên bàn và phá nó ngay lập tức. Không chọn được hộp đã nằm trong ô đỗ.`),
+      t(`Dragon link: removing a box also removes the same number of segments of its color from the dragon. Example: removing a yellow box of size 6 removes 6 yellow segments.`,
+        `Liên kết với rồng: loại bỏ một hộp cũng loại bỏ số đốt cùng màu tương ứng trên thân rồng. Ví dụ: loại bỏ một hộp vàng cỡ 6 sẽ loại bỏ 6 đốt vàng.`),
+      t(`It also clears matching segments inside the fog.`,
+        `Booster này cũng dọn được các đốt cùng màu nằm trong sương.`),
+      t(`Animation: the picked box flies up toward the dragon head and hits it.`,
+        `Hiệu ứng: hộp được chọn bay lên phía đầu rồng và đâm vào đó.`),
+      withEl+':'+ul([
+        t(`${P.el2}: active boxes on the belt are valid targets.`,`${P.el2}: các hộp đang chạy trên băng chọn được.`),
+        t(`${P.el1}: boxes hidden in the tunnel queue cannot be picked.`,`${P.el1}: không chọn được các hộp còn trong hàng chờ của đường hầm.`),
+        t(`${P.el3}: cannot be picked until its ice is broken.`,`${P.el3}: không chọn được cho tới khi băng vỡ.`)
+      ]),
+      buy
+    ]),unlockB(3),demo('remove'))+
+    ent(N.bo2,ul([
+      t(`Pauses the dragon, shuffles the colors of its segments, then lets the dragon move again.`,
+        `Tạm dừng con rồng, xáo lại màu các đốt, rồi cho rồng di chuyển tiếp.`),
+      t(`Smart shuffle, based on the boxes in the parking slots:`,`Xáo thông minh, dựa trên các hộp đang ở ô đỗ:`)+ol([
+        t(`2 or more boxes: segments matching at least 2 of those boxes’ colors move to the very front (the head) of the dragon.`,
+          `Từ 2 hộp trở lên: các đốt cùng màu với ít nhất 2 trong số các hộp đó được đưa lên sát đầu rồng.`),
+        t(`1 box: segments matching that box’s color move to the front of the dragon.`,
+          `1 hộp: các đốt cùng màu với hộp đó được đưa lên đầu rồng.`),
+        t(`No box: the segments are shuffled completely at random.`,
+          `Không có hộp: các đốt được xáo hoàn toàn ngẫu nhiên.`)
+      ]),
+      buy
+    ]),unlockB(6),demo('shuffleW'))+
+    ent(N.bo3,ul([
+      t(`Clears the fog. The full screen opens, so boxes can match segments anywhere on the dragon.`,
+        `Xua tan sương. Toàn màn hình được mở, nên hộp ghép được đốt ở bất kỳ đâu trên thân rồng.`),
+      t(`Duration: 1 minute (60 seconds).`,`Thời lượng: 1 phút (60 giây).`),
+      t(`What happens to the fog when the 60 seconds end: TBD.`,`Sương ra sao khi hết 60 giây: Chưa chốt.`),
+      buy
+    ]),unlockB(9),demo('boost'));
+
+  /* ===== 2. FTUE & tutorial ===== */
+  B['ftue--tutorial']=`<p class="sec-intro">${t(
+    `FTUE stands for first-time user experience: what a player goes through the first time they open the game.`,
+    `FTUE (First-Time User Experience) là trải nghiệm của người chơi trong lần đầu tiên mở game.`)}</p>`;
+
+  /* FIXED: how the FTUE system works is the same across projects */
+  B['ftue-logic']=defs([
+    [t('Goal','Mục tiêu'),
+     t(`The FTUE helps players grasp the core loop quickly. Its levels introduce mechanics one at a time, in an intuitive way, without overloading the player with information.`,
+       `FTUE giúp người chơi nhanh chóng hiểu vòng chơi chính. Các màn đầu giới thiệu từng cơ chế một cách tự nhiên, lần lượt, không dồn quá nhiều thông tin cùng lúc.`)],
+    [nm('Input masking','Khóa thao tác'),
+     t(`When a step needs a tap on a specific spot, a translucent overlay blocks every touch outside the target area, so the player follows the intended path. The game HUD stays usable.`,
+       `Khi một bước cần người chơi chạm vào một vị trí cụ thể, trò chơi phủ một lớp mờ lên màn hình và chặn mọi thao tác chạm bên ngoài vùng được chỉ định, để người chơi đi đúng theo hướng dẫn. Các nút trên giao diện (HUD) vẫn bấm được.`)],
+    [nm('State machine','Đi theo từng bước'),
+     t(`Each tutorial runs as a state machine, one step at a time. The overlay is released and the next step starts only when the player meets the current step's completion condition.`,
+       `Mỗi hướng dẫn chạy theo từng bước nối tiếp nhau. Chỉ khi người chơi làm đúng yêu cầu của bước hiện tại thì lớp mờ mới được gỡ và trò chơi chuyển sang bước kế tiếp.`)],
+    [nm('Highlight','Khung nổi bật'),
+     t(`Some steps show a highlight box around the place to tap. The player can only tap that place.`,
+       `Ở một số bước sẽ có khung sáng chỉ chỗ cần chạm. Người chơi chỉ chạm được vào đúng vị trí đó.`)],
+    [t('Progress save','Lưu tiến độ'),
+     t(`Some steps save that they are complete. If the player closes the app before finishing the tutorial and opens it again, the FTUE skips the saved steps and continues from the next one.`,
+       `Một số bước sẽ lưu lại trạng thái đã hoàn thành. Nếu người chơi thoát game giữa chừng rồi mở lại, FTUE bỏ qua các bước đã lưu và tiếp tục từ bước kế tiếp.`)]
+  ]);
+
+  /* PER GAME: the first and last two rows are the same in every project; replace the middle rows */
+  const hlBox=t('The highlighted box on the table','Hộp được làm nổi bật trên bàn');
+  const tapBox=n=>[t(`Tap on box ${n}`,`Chạm hộp ${n}`),t('The player taps the highlighted box.','Người chơi chạm vào hộp được làm nổi bật.'),hlBox];
+  B['ftue-steps']=table(t('FTUE steps','Các bước FTUE'),
+    [t('Step','Bước'),t('Complete condition','Điều kiện hoàn thành'),t('Highlight','Phần được làm nổi bật'),t('Text box','Nội dung hộp thoại'),t('Progress save','Lưu tiến độ')],
+    [
+      [t('Load the level','Tải màn chơi'),t('The game loads into level 1.','Trò chơi vào màn 1.'),dash,dash,dash],
+      [t('Terms &amp; Conditions / Privacy Policy','Điều khoản / Chính sách quyền riêng tư'),
+       t('The player taps to agree to the Terms &amp; Conditions / Privacy Policy.','Người chơi chạm đồng ý với Điều khoản / Chính sách quyền riêng tư.'),dash,dash,t('Yes','Có')],
+      [...tapBox(1),popup('Match color to attack the dragon','Ghép đúng màu để tấn công con rồng'),dash],
+      [...tapBox(2),popup('Box can only move in the arrow’s direction','Hộp chỉ di chuyển theo hướng mũi tên'),dash],
+      [...tapBox(3),popup('Bigger boxes hit more of the dragon!','Hộp càng lớn càng đánh trúng nhiều đốt rồng!'),dash],
+      [...tapBox(4),popup('If the dragon reaches the robot, it’s Game Over','Nếu rồng chạm tới robot, bạn sẽ thua'),dash],
+      [t('Level complete','Hoàn thành màn'),t('The player completes level 1.','Người chơi hoàn thành màn 1.'),dash,dash,t('Yes','Có')]
+    ],'wide steps-tbl');
+
+  /* PER GAME: one row per element, in unlock order */
+  B['element-tutorial']=table(t('Element tutorial','Hướng dẫn yếu tố đặc biệt'),
+    [t('Element','Yếu tố'),t('Popup text','Nội dung popup'),t('Unlocks at level','Mở ở màn')],
+    [
+      [N.el1,popup('Move the top box away<br>to reveal the next box in the tunnel.','Đưa hộp trên cùng đi<br>để lộ hộp tiếp theo trong đường hầm.'),lvl(7)],
+      [N.el2,popup('Clear the boxes on the conveyor<br>to complete the level.','Dọn hết hộp trên băng chuyền<br>để hoàn thành màn.'),lvl(12)],
+      [N.el3,popup('Frozen box cannot be moved<br>unless broken by other boxes.','Hộp đóng băng không di chuyển được<br>trừ khi bị hộp khác phá băng.'),lvl(17)]
+    ]);
+
+  /* PER GAME: one row per booster */
+  B['booster-tutorial']=table(t('Booster tutorial','Hướng dẫn công cụ hỗ trợ'),
+    [t('Booster','Công cụ'),t('Popup text','Nội dung popup'),t('Unlocks at level','Mở ở màn'),t('Free boosters','Số lượt tặng')],
+    [
+      [N.bo1,popup('Remove 1 box from the parking slots.','Loại bỏ 1 hộp khỏi ô đỗ.'),lvl(3),lvl(3)],
+      [N.bo2,popup('Shuffle line of colors.','Xáo trộn dãy màu.'),lvl(6),lvl(3)],
+      [N.bo3,popup('Clear the fog.','Xua tan sương mù.'),lvl(9),lvl(3)]
+    ])+`<p class="note">${t(`To confirm: the ${P.bo1} popup says “from the parking slots”, but 1.5 says boxes already in the parking slots cannot be picked.`,
+      `Cần xác nhận: popup ${P.bo1} ghi “khỏi ô đỗ”, nhưng mục 1.5 ghi không chọn được hộp đã nằm trong ô đỗ.`)}</p>`;
+
+  /* PER GAME: every element and booster with its unlock level, sorted by level */
+  const stops=[
+    [1,t('First tutorial','Hướng dẫn đầu tiên'),'ftue','ftue-steps','FTUE'],
+    [3,P.bo1,'boost','booster-mechanics'],[6,P.bo2,'boost','booster-mechanics'],
+    [7,P.el1,'elem','elements-mechanics'],[9,P.bo3,'boost','booster-mechanics'],
+    [12,P.el2,'elem','elements-mechanics'],[17,P.el3,'elem','elements-mechanics']
+  ];
+  B['ftue--tutorial:after']=`<div class="glance">
+    <h4>${t('Unlock order at a glance','Thứ tự mở khóa theo màn')}</h4>
+    <p>${t('Sections 2.2 to 2.4 on one line, in level order.','Gom các mục 2.2 đến 2.4 trên một dòng, theo thứ tự màn chơi.')}</p>
+    <ol class="timeline">${stops.map(s=>`<li class="${s[2]}"><span class="lv">${t('Level','Màn')} ${s[0]}</span><span class="nm"><a href="#${s[3]}">${s[1]}</a></span><span class="kd">${s[4]||(s[2]==='boost'?t('Booster','Công cụ hỗ trợ'):t('Element','Yếu tố đặc biệt'))}</span></li>`).join('')}</ol>
+  </div>`;
+
+  /* ===== 3. Object set & animation ===== */
+  /* PER GAME */
+  B['game-concept']=`<p>${t(`A wool dragon crawls along a track toward a robot. The player sends colored boxes up to the parking slots, and each box pulls wool segments of its color out of the dragon. Art direction and concept art: TBD.`,
+    `Một con rồng len bò dọc đường đi về phía robot. Người chơi đưa các hộp màu lên ô đỗ, mỗi hộp kéo các đốt len cùng màu ra khỏi thân rồng. Định hướng hình ảnh và concept art: Chưa chốt.`)}</p>`;
+
+  const colors=[t('Red','Đỏ'),t('Blue','Xanh dương'),t('Green','Xanh lá'),t('Yellow','Vàng'),t('Pink','Hồng'),t('Orange','Cam'),t('Purple','Tím'),t('Cyan','Xanh ngọc')];
+  const anim=n=>t('Animation '+n,'Chuyển động '+n);
+  const an=t('Animation','Chuyển động'),look=t('Look','Hình ảnh');
+  B['core-game-object-concept']=
+    ent(t('Color list','Bảng màu'),
+      `<p>${t('Boxes and the dragon’s wool segments share this color list. Which colors the game uses: TBD.','Hộp và các đốt len của rồng dùng chung bảng màu này. Game dùng những màu nào: Chưa chốt.')}</p>
+       <ol class="colors">${colors.map((c,i)=>`<li>${cap(i+1,i+1)}<span><span class="sr">${i+1}: </span>${c}</span></li>`).join('')}</ol>`)+
+    ent(nm('Box','Hộp'),params([
+      [look,tbd],
+      [anim(1),t('Moves from the pile to the first free parking slot.','Đi từ đống hộp tới ô đỗ trống đầu tiên.')],
+      [anim(2),t('Pulls matching segments out of the dragon into its free spaces.','Kéo các đốt cùng màu từ thân rồng vào chỗ trống của hộp.')],
+      [anim(3),t('Clears from the level when full.','Rời khỏi màn khi đầy.')]
+    ]))+
+    ent(nm('Dragon','Con rồng'),params([
+      [look,tbd],
+      [anim(1),t('Speeds up to the starting point at level start, then slows to normal speed.','Tăng tốc tới điểm xuất phát khi bắt đầu màn, rồi giảm về tốc độ bình thường.')],
+      [anim(2),t('Stops for a moment when a segment is removed, then joins up into one line.','Tạm dừng khi một đốt bị lấy ra, rồi nối lại thành một hàng liền.')]
+    ]))+
+    ent(nm('Robot','Robot'),params([
+      [look,tbd],
+      [anim(1),t('Moves back to its next backdown position when the dragon reaches it.','Lùi về vị trí tiếp theo khi rồng chạm tới.')],
+      [anim(2),t('A fear reaction at random every 10 to 17 seconds, with the Robot fear sound.','Phản ứng sợ hãi ngẫu nhiên mỗi 10 đến 17 giây, kèm âm thanh Robot fear.')]
+    ]))+
+    ent(nm('Fog','Sương mù'),params([
+      [look,tbd],
+      [an,t(`Blows away when ${P.bo3} is used.`,`Bị thổi tan khi dùng ${P.bo3}.`)]
+    ]));
+
+  B['element-object-concept']=
+    ent(N.el1,params([[look,t('A portal with a counter of the boxes left inside.','Một cổng có con số đếm số hộp còn bên trong.')],[an,t('A new box comes out at the exit.','Một hộp mới chui ra ở cửa.')]]))+
+    ent(N.el2,params([[look,t('A belt across the screen, with a counter of the boxes left.','Một băng chuyền ngang màn hình, có con số đếm số hộp còn lại.')],[an,t('Boxes ride along and loop from the end back to the start.','Hộp chạy theo băng và vòng từ cuối về đầu.')]]))+
+    ent(N.el3,params([[look,t('A box inside a block of ice.','Một hộp nằm trong khối băng.')],[an,t('The ice breaks when a box hits it, and the attacking box bounces back.','Băng vỡ khi bị hộp khác đâm vào, hộp tấn công bật về.')]]));
+
+  B['booster-object-concept']=
+    ent(N.bo1,params([[an,t('The picked box flies up toward the dragon head and hits it. Matching segments are removed.','Hộp được chọn bay lên đâm vào đầu rồng. Các đốt cùng màu bị loại bỏ.')]]))+
+    ent(N.bo2,params([[an,t('The dragon pauses, its segment colors shuffle, then it moves again.','Rồng tạm dừng, màu các đốt được xáo lại, rồi rồng đi tiếp.')]]))+
+    ent(N.bo3,params([[an,t('A wind blows the fog away.','Một cơn gió thổi tan sương.')]]));
+
+  /* ===== 4. SFX & haptics ===== */
+  /* FIXED: the UI rows are the same in every project. PER GAME: replace the core, element and booster rows.
+     Haptic: 0 none, 1 weak, 2 medium, 3 strong */
+  const cat={ui:t('UI','Giao diện (UI)'),core:t('Core game SFX','Lối chơi chính'),el:t('Element SFX','Yếu tố đặc biệt'),bo:t('Booster SFX','Công cụ hỗ trợ')};
+  const sfx=[
+    ['BGM In Game','ui',t('Gameplay starts','Bắt đầu vào chơi'),0],
+    ['BGM Home','ui',t('The home scene is open','Đang ở màn hình chính'),0],
+    ['BGM Loading','ui',t('The loading scene is open','Đang ở màn hình tải'),0],
+    ['Win Level','ui',t('The player wins the level','Người chơi thắng màn'),3],
+    ['Lose Level','ui',t('The player is temporarily stuck','Người chơi tạm thời bị kẹt'),3],
+    ['Tap','ui',t('The player taps the screen','Người chơi chạm vào màn hình'),1],
+    ['Coin Reward','ui',t('The player earns coins','Người chơi nhận xu'),0],
+    ['Booster Reward','ui',t('The player earns a booster','Người chơi nhận công cụ hỗ trợ'),0],
+    ['Purchase Complete','ui',t('An IAP purchase completes, or the player claims a limited time reward','Mua IAP thành công, hoặc người chơi nhận quà giới hạn thời gian'),0],
+    ['Box to slot','core',t('The player taps a box','Người chơi chạm vào hộp'),1],
+    ['Box Pulling from Dragon','core',t('A box pulls a segment from the dragon','Hộp kéo một đốt ra khỏi thân rồng'),0],
+    ['Box clear','core',t('A box is full and clears from the level','Hộp đầy và rời khỏi màn'),0],
+    ['Slot Unlock','core',t('A reward ads slot is unlocked','Mở khóa ô đỗ bằng quảng cáo thưởng'),0],
+    ['Robot fear','core',t('The robot plays this at random, every 10 to 17 seconds','Robot phát ngẫu nhiên, mỗi 10 đến 17 giây'),0],
+    ['Tunnel Spawn block','el',t('The tunnel spawns a new box','Đường hầm đưa ra một hộp mới'),0],
+    ['Ice Break','el',t('The ice on a box breaks','Băng trên hộp vỡ'),2],
+    ['Remove fly up','bo',t('The picked box flies toward the dragon head','Hộp được chọn bay về phía đầu rồng'),0],
+    ['Remove hit dragon','bo',t('The picked box hits the dragon head','Hộp được chọn đâm vào đầu rồng'),2],
+    ['Shuffle','bo',t('The player uses the Shuffle booster','Người chơi dùng công cụ Xáo trộn'),0],
+    ['Boost Wind Blow','bo',t('The player uses the Boost booster','Người chơi dùng công cụ Xua sương'),0]
+  ];
+  B['sfx--haptics']=table(t('SFX and haptics','Âm thanh và rung'),
+    [t('Name','Tên'),t('Category','Nhóm'),t('Plays when','Phát khi'),t('Haptic','Rung')],
+    sfx.map(r=>[`<span lang="en">${r[0]}</span>`,`<span class="cat">${cat[r[1]]}</span>`,r[2],hap(r[3])]));
+
+  /* ===== 5. Remote config ===== */
+  /* FIXED: keep every key. Only change the values for the new game. */
+  const rcHeads=[t('Key','Key'),t('Description','Mô tả'),t('Value','Giá trị'),t('Unit','Đơn vị')];
+  const rc=(name,rows)=>ent(name,table(name,rcHeads,
+    rows.map(([k,d,v,u])=>[`<code lang="en">${k}</code>`,d,v,u])));
+  const coin=t('coin','xu'),coins=t('coins','xu'),lives=t('lives','mạng'),boosters=t('boosters','công cụ');
+  const cost=u=>`${t('cost','giá')} · ${u}`,rew=u=>`${t('reward','thưởng')} · ${u}`;
+  const boost=(id,en,v,price)=>[
+    [`booster_${id}_coin_price`,t(`${en} booster — buy with coins — COST: coins paid`,`Công cụ ${v} — mua bằng xu — GIÁ: số xu phải trả`),price,cost(coins)],
+    [`booster_${id}_coin_amount`,t(`${en} booster — buy with coins — REWARD: boosters given`,`Công cụ ${v} — mua bằng xu — THƯỞNG: số công cụ nhận`),'3',rew(boosters)],
+    [`booster_${id}_ad_amount`,t(`${en} booster — watch ads — REWARD: boosters given`,`Công cụ ${v} — xem quảng cáo — THƯỞNG: số công cụ nhận`),'1',rew(boosters)]
+  ];
+  B['remote-config']=`<p class="sec-intro">${t(
+      `Values the team can change without releasing a new build.`,
+      `Các thông số mà đội có thể chỉnh mà không cần phát hành bản game mới.`)}</p>`+
+    rc(t('Level reward','Thưởng qua màn'),[
+      ['level_win_coin',t('Coins for completing a level','Số xu nhận khi hoàn thành màn'),'40',coin],
+      ['level_win_ad_multiplier',t('Reward multiplier when the player watches the reward ad','Hệ số nhân thưởng khi người chơi xem quảng cáo thưởng'),'2.0×','×']
+    ])+
+    rc(t('Revive','Hồi sinh'),[
+      ['revive_base_cost',t('Coin cost of the 1st revive in an attempt','Số xu cho lần hồi sinh đầu tiên trong một lượt chơi'),'900',coin],
+      ['revive_cost_growth',t('Revive cost growth (next revive = current cost × this)','Mức tăng giá hồi sinh (lần sau = giá hiện tại × hệ số này)'),'1.00×','×'],
+      ['revive_max_ads_per_attempt',t('Max revives by ad in one attempt','Số lần hồi sinh bằng quảng cáo tối đa trong một lượt chơi'),'1',t('count','lần')]
+    ])+
+    rc(t('Lives','Mạng'),[
+      ['lives_max',t('Maximum lives','Số mạng tối đa'),'5',lives],
+      ['life_refill_minutes',t('Minutes to regenerate 1 life','Số phút để hồi 1 mạng'),'20',t('min','phút')]
+    ])+
+    rc(t('Lives refill — cost and reward (offered at 0 lives)','Nạp mạng — giá và thưởng (hiện khi còn 0 mạng)'),[
+      ['lives_refill_coin_cost',t('Refill with coins — COST: coins paid','Nạp bằng xu — GIÁ: số xu phải trả'),'900',cost(coins)],
+      ['lives_refill_coin_amount',t('Refill with coins — REWARD: lives given','Nạp bằng xu — THƯỞNG: số mạng nhận'),'5',rew(lives)],
+      ['lives_refill_ad_amount',t('Refill with ads — REWARD: lives given','Nạp bằng quảng cáo — THƯỞNG: số mạng nhận'),'1',rew(lives)]
+    ])+
+    rc(t('Boosters — cost and reward','Công cụ hỗ trợ — giá và thưởng'),[
+      ...boost('weak','Weak','yếu','900'),
+      ...boost('medium','Medium','vừa','1,200'),
+      ...boost('strong','Strong','mạnh','1,500')
+    ])+
+    rc(t('Unlock popups — offer unlock level','Popup mở khóa — màn mở ưu đãi'),[
+      ['starter_pack_unlock_level',t('Starter Pack (IAP) — level from which the offer popup can show','Gói Khởi đầu (IAP) — màn bắt đầu có thể hiện popup ưu đãi'),'12',t('level','màn')],
+      ['remove_ads_unlock_level',t('Remove Ads (IAP) — level from which the offer popup can show','Gỡ quảng cáo (IAP) — màn bắt đầu có thể hiện popup ưu đãi'),'15',t('level','màn')],
+      ['garage_gift_unlock_level',t('Limited Time Reward / Garage Gift (rewarded ad) — level from which the gift popup can show','Quà giới hạn thời gian / Garage Gift (quảng cáo thưởng) — màn bắt đầu có thể hiện popup quà'),'10',t('level','màn')]
+    ])+
+    rc(t('Live ops','Live Ops'),[
+      ['skip_level_max_per_day',t('Skip Level — max skips per day (ad or coins). The count resets each new day.','Bỏ qua màn — số lần bỏ qua tối đa mỗi ngày (bằng quảng cáo hoặc xu). Số lần được tính lại mỗi ngày mới.'),'3',t('count','lần')],
+      ['retry_booster_max_per_day',t('Retry with Booster — max uses per day (rewarded ad). The count resets each new day.','Chơi lại kèm công cụ — số lần dùng tối đa mỗi ngày (quảng cáo có thưởng). Số lần được tính lại mỗi ngày mới.'),'3',t('count','lần')]
+    ]);
+
+  /* ===== 6. IAP & offers ===== */
+  /* FIXED: keep the logic. Per game, only change PID (the product ID prefix), prices and pack amounts if they differ.
+     6.1 lists every pack and 6.2 every popup, one row each. Add or change a pack or popup there first,
+     then give it a detail entry (6.5, 6.6 or section 7) only if its rules don't fit in one row. */
+  B['iap--offers']=`<p class="sec-intro">${t(`In-app purchases and every popup that offers the player something, paid with money, coins or a rewarded ad. 6.1 and 6.2 are the two lists to keep up to date. The sections after them hold the detailed rules. Every unlock level here is remote config.`,
+    `Các gói mua trong game và mọi popup mời người chơi nhận ưu đãi, trả bằng tiền, xu hoặc quảng cáo có thưởng. Mục 6.1 và 6.2 là hai danh sách cần luôn cập nhật. Các mục sau đó ghi quy tắc chi tiết. Mọi màn mở khóa ở đây đều nằm trong cấu hình từ xa.`)}</p>`;
+  const pid=s=>`<code>${PID}.${s}</code>`;
+  const see=(id,n)=>`<a href="#${id}">${n}</a>`;
+  const bx=n=>t(`${n}× each booster`,`Mỗi công cụ ×${n}`);
+  const hr=n=>t(`${n} hour${n>1?'s':''}`,`${n} giờ`);
+  const packs=[
+    [t('Remove Ads','Gỡ quảng cáo')],
+    ['Remove Ads Pack',pid('remove_ads'),'1,500',bx(1),dash,t('Permanently removes interstitial and banner ads','Gỡ vĩnh viễn quảng cáo xen kẽ (interstitial) và quảng cáo banner'),'$5.99'],
+    [t('Limited Time Pack','Gói giới hạn thời gian')],
+    ['Starter Pack',pid('starter_pack'),'2,500',bx(2),hr(2),dash,'$1.99'],
+    [t('Special Pack','Gói đặc biệt')],
+    ['Small Pack',pid('pack_small'),'2,500',bx(2),hr(1),dash,'$4.99'],
+    ['Medium Pack',pid('pack_medium'),'10,000',bx(5),hr(2),dash,'$9.99'],
+    ['Ultra Pack',pid('pack_ultra'),'25,000',bx(10),hr(6),dash,'$24.99'],
+    [t('Gold Pack','Gói vàng')],
+    ['1,000 Gold',pid('coins_1K'),'1,000',dash,dash,dash,'$1.99'],
+    ['5,000 Gold',pid('coins_5K'),'5,000',dash,dash,dash,'$4.99'],
+    ['10,000 Gold',pid('coins_10K'),'10,000',dash,dash,dash,'$9.99'],
+    ['25,000 Gold',pid('coins_25K'),'25,000',dash,dash,dash,'$24.99'],
+    ['50,000 Gold',pid('coins_50K'),'50,000',dash,dash,dash,'$49.99'],
+    ['100,000 Gold',pid('coins_100K'),'100,000',dash,dash,dash,'$99.99']
+  ];
+  const NUMC={2:1,6:1};
+  const packHead=[t('Pack','Gói'),'ID',t('Gold','Vàng'),t('Boosters','Công cụ hỗ trợ'),t('Unlimited lives','Tim vô hạn'),t('Other benefit','Lợi ích khác'),t('Price (USD)','Giá (USD)')];
+  B['pack-list']=`<p class="sec-intro">${t(`Every IAP pack, grouped as they appear in the store. Product IDs all start with the game’s prefix (<code>${PID}</code>).`,
+      `Mọi gói IAP, xếp theo nhóm như trong cửa hàng. Mã sản phẩm (product ID) đều bắt đầu bằng tiền tố của game (<code>${PID}</code>).`)}</p>`+
+    `<div class="tbl xwide" tabindex="0" role="region" aria-label="${esc(t('Pack list','Danh sách gói'))}"><table><thead><tr>${packHead.map((h,i)=>`<th scope="col"${NUMC[i]?' class="num"':''}>${h}</th>`).join('')}</tr></thead><tbody>${
+    packs.map(r=>r.length===1?`<tr class="grp"><th scope="rowgroup" colspan="7">${r[0]}</th></tr>`
+      :`<tr><th scope="row">${r[0]}</th><td>${r[1]}</td>${r.slice(2).map((c,i)=>`<td${NUMC[i+2]?' class="num"':(i+2===5?' class="wrap"':'')}>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+
+  /* one row per popup: [name, paid with, unlock, when it shows, repeats & limits, Home/HUD icon, in store, rules] */
+  const popRows=[
+    [t('IAP popups','Popup IAP')],
+    [nm('Starter Pack','Gói Khởi đầu'),`IAP<br>${pid('starter_pack')}`,lvl(12),
+      t(`First session start at level 12 or above. Then at every session start while its 72-hour window runs (priority 1).`,`Lần mở game đầu tiên từ màn 12 trở lên. Sau đó ở mỗi lần mở game khi 72 giờ vẫn còn (ưu tiên 1).`),
+      t(`72 hours from the first popup. Gone for good once bought or expired.`,`72 giờ tính từ popup đầu tiên. Biến mất hẳn khi đã mua hoặc hết hạn.`),
+      t(`Home icon with countdown, from the first popup until bought or expired.`,`Biểu tượng ở màn hình chính kèm đồng hồ, từ popup đầu tiên tới khi mua hoặc hết hạn.`),
+      t(`From the first popup until bought or expired.`,`Từ popup đầu tiên tới khi mua hoặc hết hạn.`),see('starter-pack','6.5')],
+    [nm('Remove Ads','Gỡ quảng cáo'),`IAP<br>${pid('remove_ads')}`,lvl(15),
+      t(`Right after the first interstitial ad past level 15, then after every 4 interstitials (2nd–4th time) or every 8 (5th time on). Never at session start.`,`Ngay sau quảng cáo xen kẽ đầu tiên kể từ màn 15, sau đó sau mỗi 4 quảng cáo xen kẽ (lần 2–4) hoặc mỗi 8 quảng cáo (từ lần 5). Không bao giờ hiện khi mở game.`),
+      t(`2nd–4th time: 20-minute cooldown or a new session. 5th time on: at most 2 a day. Stops once bought.`,`Lần 2–4: chờ 20 phút hoặc tới phiên chơi mới. Từ lần 5: tối đa 2 lần mỗi ngày. Dừng hẳn khi đã mua.`),
+      t(`Home icon from the first popup until bought.`,`Biểu tượng ở màn hình chính từ popup đầu tiên tới khi mua.`),
+      t(`Always, until bought. If bought first, the popup never shows.`,`Luôn có, tới khi mua. Nếu mua trước thì popup không bao giờ hiện.`),see('remove-ads','6.6')],
+    [t('Rewarded-ad and coin popups','Popup quảng cáo có thưởng và xu')],
+    [nm('Limited Time Reward','Quà giới hạn thời gian'),t('Rewarded ad','Quảng cáo có thưởng'),lvl(10),
+      t(`Session start (priority 2), back to Home after a win, or a win while the claim timer runs.`,`Khi mở game (ưu tiên 2), khi về màn hình chính sau khi thắng, hoặc khi thắng một màn lúc đồng hồ nhận quà còn chạy.`),
+      t(`4 hours between gifts. 10 minutes to claim, then it disappears.`,`Mỗi lần quà cách nhau 4 giờ. Có 10 phút để nhận, sau đó quà biến mất.`),
+      t(`HUD icon with countdown, only while a gift is waiting.`,`Biểu tượng trên HUD kèm đồng hồ, chỉ khi đang có quà chờ nhận.`),
+      t(`Never.`,`Không có.`),see('limited-time-reward','7.1')],
+    [nm('Skip Level','Bỏ qua màn'),t('Rewarded ad or coins','Quảng cáo có thưởng hoặc xu'),lvl('X'),
+      t(`Button on the lose screen after failing the same level 3 times in a row.`,`Nút ở màn hình thua, sau khi thua cùng một màn 3 lần liên tiếp.`),
+      t(`At most 3 a day (<code>skip_level_max_per_day</code>).`,`Tối đa 3 lần mỗi ngày (<code>skip_level_max_per_day</code>).`),
+      dash,dash,see('skip-level','7.2')],
+    [nm('Retry with Booster','Chơi lại kèm công cụ'),t('Rewarded ad','Quảng cáo có thưởng'),t(`3rd booster (${P.bo3})`,`Công cụ thứ 3 (${P.bo3})`),
+      t(`The player restarts a level while they have 0 ${P.bo3}.`,`Người chơi chơi lại một màn khi đang có 0 ${P.bo3}.`),
+      t(`At most 3 a day (<code>retry_booster_max_per_day</code>).`,`Tối đa 3 lần mỗi ngày (<code>retry_booster_max_per_day</code>).`),
+      dash,dash,see('retry-with-booster','7.3')],
+    [nm('Revive','Hồi sinh'),t('Coins or rewarded ad','Xu hoặc quảng cáo có thưởng'),t('Always','Luôn có'),
+      t(`The moment the player loses a level.`,`Ngay khi người chơi thua một màn.`),
+      t(`At most 1 revive by ad per attempt (<code>revive_max_ads_per_attempt</code>).`,`Tối đa 1 lần hồi sinh bằng quảng cáo mỗi lượt chơi (<code>revive_max_ads_per_attempt</code>).`),
+      dash,dash,see('gameplay-overview','1.1')],
+    [nm('Refill lives','Nạp tim'),t('Coins or rewarded ad','Xu hoặc quảng cáo có thưởng'),t('Always','Luôn có'),
+      t(`The player tries to start or retry a level with 0 lives.`,`Người chơi muốn bắt đầu hoặc chơi lại một màn khi còn 0 tim.`),
+      t(`900 coins for 5 lives, or 1 ad for 1 life (remote config).`,`900 xu được 5 tim, hoặc 1 quảng cáo được 1 tim (cấu hình từ xa).`),
+      dash,dash,see('remote-config','5')]
+  ];
+  const popHead=[t('Popup','Popup'),t('Paid with','Trả bằng'),t('Unlock level','Màn mở khóa'),t('When it shows','Khi nào hiện'),t('Repeats & limits','Lặp lại & giới hạn'),t('Icon','Biểu tượng'),t('In store','Trong cửa hàng'),t('Rules','Quy tắc')];
+  B['popup-list']=`<p class="sec-intro">${t(`Every popup that offers the player something. Use this as the checklist when adding or changing an offer.`,
+      `Mọi popup mời người chơi nhận ưu đãi. Dùng bảng này làm danh sách kiểm tra khi thêm hoặc đổi một ưu đãi.`)}</p>`+
+    `<div class="tbl pops" tabindex="0" role="region" aria-label="${esc(t('Popup list','Danh sách popup'))}"><table><thead><tr>${popHead.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${
+    popRows.map(r=>r.length===1?`<tr class="grp"><th scope="rowgroup" colspan="8">${r[0]}</th></tr>`
+      :`<tr><th scope="row">${r[0]}</th>${r.slice(1).map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+
+  B['store']=ul([
+      t(`Opened from the Home screen and from the gold counter on the HUD.`,`Mở từ màn hình chính và từ ô đếm vàng trên HUD.`),
+      t(`Shows the packs in 6.1, grouped in this order: Remove Ads → Limited Time Pack → Special Pack → Gold Pack.`,`Hiện các gói ở mục 6.1, xếp theo nhóm, thứ tự: Gỡ quảng cáo → Gói giới hạn thời gian → Gói đặc biệt → Gói vàng.`)
+    ])+
+    ent(t('Display rules','Quy tắc hiển thị'),ul([
+      t(`Starter Pack and Remove Ads follow the “In store” column in 6.2.`,`Gói Khởi đầu và Gỡ quảng cáo hiện theo cột “Trong cửa hàng” ở mục 6.2.`),
+      t(`Gold Packs and Special Packs always show and can be bought again and again.`,`Gói vàng và Gói đặc biệt luôn hiện và mua được nhiều lần.`),
+      t(`Show a “Best Value” tag on the 100,000 Gold pack and a “Hot” tag on Remove Ads.`,`Gắn nhãn “Best Value” cho gói 100.000 vàng và nhãn “Hot” cho gói Gỡ quảng cáo.`),
+      t(`After a successful purchase, play the reward animation (gold and boosters fly to the HUD), then update the counters.`,`Sau khi mua thành công, chạy hiệu ứng nhận thưởng (vàng và công cụ bay lên HUD), rồi cập nhật các con số.`),
+      t(`If the purchase fails or is cancelled, close the loading state and keep the player in the store with nothing changed.`,`Nếu giao dịch lỗi hoặc bị hủy, tắt trạng thái đang tải và giữ người chơi ở cửa hàng, không thay đổi gì.`)
+    ]));
+
+  const arrow=`<div class="arrow" aria-hidden="true" data-nosearch>↓</div>`;
+
+  B['session-start-popup']=
+    `<p class="sec-intro">${t(`Only one popup can show when the game opens. The game checks the offers in this order and shows the first one that passes.`,
+      `Mỗi lần mở game chỉ hiện tối đa một popup. Trò chơi kiểm tra các ưu đãi theo thứ tự dưới đây và hiện popup đầu tiên thỏa điều kiện.`)}</p>
+     <div class="flow">
+       <div class="node"><p><span class="k">${t('Step 1','Bước 1')}</span>${t(`The game opens and checks the player’s level.`,`Game mở ra và kiểm tra màn hiện tại của người chơi.`)}</p></div>
+       ${arrow}
+       <div class="node"><p><span class="k">${t('Step 2 · Starter Pack','Bước 2 · Gói Khởi đầu')}</span></p><p class="cond">${t(`Is the Starter Pack active? All must be true:`,`Gói Khởi đầu còn hiệu lực không? Phải thỏa tất cả:`)}</p>${ul([
+         t(`Player level ≥ the Starter Pack unlock level (12)`,`Màn của người chơi ≥ màn mở Gói Khởi đầu (12)`),
+         t(`Not bought yet`,`Chưa mua`),
+         t(`Still inside the 72-hour window`,`Vẫn còn trong 72 giờ`)])}</div>
+       ${arrow}
+       <div class="split">
+         <div class="node"><p class="cond"><span class="yn">${t('Yes','Có')}</span>${t(`Show the Starter Pack popup.`,`Hiện popup Gói Khởi đầu.`)}</p><p>${t('Stop here.','Dừng tại đây.')}</p></div>
+         <div class="node"><p class="cond"><span class="yn no">${t('No','Không')}</span>${t(`Go to step 3.`,`Chuyển sang bước 3.`)}</p></div>
+       </div>
+       ${arrow}
+       <div class="node"><p><span class="k">${t('Step 3 · Limited Time Reward','Bước 3 · Quà giới hạn thời gian')}</span></p><p class="cond">${t(`Is the Limited Time Reward ready? All must be true:`,`Quà giới hạn thời gian đã sẵn sàng chưa? Phải thỏa tất cả:`)}</p>${ul([
+         t(`Player level ≥ the Limited Time Reward unlock level (10)`,`Màn của người chơi ≥ màn mở Quà giới hạn thời gian (10)`),
+         t(`At least 4 hours since the last gift`,`Đã qua ít nhất 4 giờ kể từ lần quà trước`)])}</div>
+       ${arrow}
+       <div class="split">
+         <div class="node"><p class="cond"><span class="yn">${t('Yes','Có')}</span>${t(`Show the Limited Time Reward popup.`,`Hiện popup Quà giới hạn thời gian.`)}</p><p>${t('Stop here.','Dừng tại đây.')}</p></div>
+         <div class="node"><p class="cond"><span class="yn no">${t('No','Không')}</span>${t(`Show nothing and go straight to the Home screen.`,`Không hiện gì, vào thẳng màn hình chính.`)}</p></div>
+       </div>
+     </div>`+
+    `<div class="note">${ul([
+      t(`Remove Ads is never part of this check (see 6.6).`,`Gỡ quảng cáo không bao giờ nằm trong lượt kiểm tra này (xem 6.6).`),
+      t(`No popups show while an FTUE step is still in progress.`,`Không popup nào hiện khi người chơi đang làm dở một bước FTUE.`)])}</div>`;
+
+  B['starter-pack']=
+    sys(nm('Starter Pack','Gói Khởi đầu'),
+      lead(t(`A one-time, low-price pack for first-time buyers, shown as a big limited-time discount.`,`Gói giá rẻ chỉ mua được một lần, dành cho người chơi lần đầu bỏ tiền, được giới thiệu như một đợt giảm giá lớn có thời hạn.`))+
+      tiles([['2,500',t('Gold','Vàng')],['2×',t('Each booster','Mỗi công cụ')],[t('2 h','2 giờ'),t('Unlimited lives','Tim vô hạn')],['$1.99',t('Price','Giá'),'hot']])+
+      panel(t('Why it reads as a deal','Vì sao trông rất hời'),ul([
+        t(`Same price as the cheapest gold pack, with 2.5× the gold (2,500 vs 1,000), plus 2 of each booster and unlimited lives.`,`Cùng giá với gói vàng rẻ nhất nhưng nhiều vàng gấp 2,5 lần (2.500 so với 1.000), lại có thêm mỗi công cụ 2 lượt và tim vô hạn.`),
+        t(`About the same content as the Small Pack (a little more), at 40% of its price. Shown as “60% OFF – Limited Time”.`,`Nội dung ngang (hoặc nhỉnh hơn) Gói Nhỏ, nhưng giá chỉ bằng 40%. Hiển thị là “60% OFF – Limited Time”.`)
+      ]))+
+      panel(t('When it appears','Khi nào xuất hiện'),ul([
+        t(`Unlocks when the player opens the game after reaching level 12.`,`Mở khi người chơi vào game sau khi đã tới màn 12.`),
+        t(`The first popup shows right then, and the 72-hour countdown starts after it.`,`Popup đầu tiên hiện ngay lúc đó, và đồng hồ 72 giờ bắt đầu chạy sau popup này.`),
+        t(`While the countdown runs, the popup can show again at session start (see 6.3).`,`Trong lúc đồng hồ còn chạy, popup có thể hiện lại khi mở game (xem 6.3).`)
+      ]))+
+      panel(t('Icon and store','Biểu tượng và cửa hàng'),ul([
+        t(`The Home icon (with countdown) and the store entry stay hidden until the first popup.`,`Biểu tượng ở màn hình chính (kèm đồng hồ) và mục trong cửa hàng được ẩn cho tới khi popup đầu tiên hiện ra.`),
+        t(`After that, the player can open the offer from the Home icon or the store at any time during the 72 hours.`,`Sau đó, người chơi có thể mở ưu đãi từ biểu tượng ở màn hình chính hoặc từ cửa hàng bất cứ lúc nào trong 72 giờ.`)
+      ]))+
+      panel(t('Expiry','Hết hạn'),kv([
+        [t('Bought','Đã mua'),t(`Popup, icon and store entry disappear for good.`,`Popup, biểu tượng và mục trong cửa hàng biến mất hẳn.`)],
+        [t('72 hours pass','Hết 72 giờ'),t(`With no purchase, the offer disappears for good.`,`Nếu chưa mua, ưu đãi biến mất hẳn.`)],
+        [t('Product ID','Mã sản phẩm'),pid('starter_pack')]
+      ])));
+
+  const raRows=[
+    [t('1st time','Lần 1'),ul([t(`The player reaches the required level (15).`,`Người chơi tới màn yêu cầu (15).`),t(`Shows right after the first interstitial ad after that level.`,`Hiện ngay sau quảng cáo xen kẽ đầu tiên kể từ màn đó.`)]),ul([t(`Shows once.`,`Chỉ hiện 1 lần.`)])],
+    [t('2nd to 4th time','Lần 2 đến lần 4'),ul([t(`After every 4 interstitial ads.`,`Sau mỗi 4 quảng cáo xen kẽ.`)]),ul([t(`20-minute cooldown after each popup, or until the player starts a new session.`,`Sau mỗi lần hiện phải chờ 20 phút, hoặc tới khi người chơi mở phiên chơi mới.`)])],
+    [t('5th time onward','Từ lần 5 trở đi'),ul([t(`After every 8 interstitial ads.`,`Sau mỗi 8 quảng cáo xen kẽ.`)]),ul([t(`At most 2 popups a day.`,`Tối đa 2 lần mỗi ngày.`),t(`The daily count resets after 24 hours.`,`Số lần trong ngày được tính lại sau 24 giờ.`)])]
+  ];
+  B['remove-ads']=
+    sys(nm('Remove Ads','Gỡ quảng cáo'),
+      lead(t(`Removes forced ads for good, for players who see a lot of them.`,`Gỡ vĩnh viễn quảng cáo bắt buộc, dành cho người chơi gặp nhiều quảng cáo.`))+
+      tiles([[t('No ads','Không QC'),t('Interstitials and banners','Xen kẽ và banner')],['1,500',t('Gold','Vàng')],['1×',t('Each booster','Mỗi công cụ')],['$5.99',t('Price','Giá'),'hot']])+
+      panel(t('What it does','Tác dụng'),ul([
+        t(`Removes interstitial and banner ads permanently.`,`Gỡ vĩnh viễn quảng cáo xen kẽ và quảng cáo banner.`),
+        t(`Rewarded ads stay, because the player chooses to watch them for rewards.`,`Quảng cáo có thưởng vẫn giữ lại, vì người chơi tự chọn xem để nhận thưởng.`),
+        t(`Shown with a “Hot” tag in the store.`,`Hiện kèm nhãn “Hot” trong cửa hàng.`)
+      ]))+
+      panel(t('When it appears','Khi nào xuất hiện'),ul([
+        t(`Never at session start.`,`Không bao giờ hiện khi mở game.`),
+        t(`The first popup shows right after the player has passed level 15 and has just seen their first interstitial ad after that level. The ad itself reminds them why the offer is useful.`,
+          `Popup đầu tiên hiện ngay sau khi người chơi đã qua màn 15 và vừa gặp quảng cáo xen kẽ đầu tiên kể từ màn đó. Chính quảng cáo ấy nhắc người chơi vì sao gói này đáng mua.`)
+      ]))+
+      panel(t('Popup repeats','Popup hiện lại'),`<p>${t(`After the first time, the popup comes back after a number of interstitial ads. The gap grows over time so it doesn’t annoy the player.`,`Sau lần đầu, popup hiện lại sau một số quảng cáo xen kẽ. Khoảng cách giữa các lần tăng dần để không làm phiền người chơi.`)}</p>`+
+        table(t('Remove Ads popup repeats','Popup Gỡ quảng cáo hiện lại'),[t('Popup shows','Lần hiện'),t('When it shows','Khi nào hiện'),t('Limit','Giới hạn')],raRows,'wide'))+
+      panel(t('Icon and store','Biểu tượng và cửa hàng'),ul([
+        t(`Always available in the store, so the player can buy it any time, even before level 15.`,`Luôn có trong cửa hàng, người chơi mua được bất cứ lúc nào, kể cả trước màn 15.`),
+        t(`If the player buys it before the popup is triggered, the popup never shows.`,`Nếu người chơi mua trước khi popup được kích hoạt, popup sẽ không bao giờ hiện.`),
+        t(`The Home icon stays hidden until the first popup appears.`,`Biểu tượng ở màn hình chính được ẩn cho tới khi popup đầu tiên hiện ra.`)
+      ]))+
+      panel(t('Expiry and restore','Hết hạn và khôi phục'),kv([
+        [t('Expiry','Hết hạn'),t(`Permanent offer, no countdown. Once bought, the popup, icon and store entry hide.`,`Ưu đãi lâu dài, không đếm ngược. Khi đã mua, popup, biểu tượng và mục trong cửa hàng được ẩn đi.`)],
+        [t('Restore','Khôi phục'),t(`It is a non-consumable purchase, so it must be restored when the player reinstalls or changes device (Restore Purchases button in Settings and in the Store).`,
+                                  `Đây là gói mua một lần dùng mãi, nên phải khôi phục được khi người chơi cài lại game hoặc đổi máy (nút Khôi phục giao dịch trong Cài đặt và trong Cửa hàng).`)],
+        [t('Product ID','Mã sản phẩm'),pid('remove_ads')]
+      ])));
+
+  /* ===== 7. Live ops ===== */
+  /* FIXED: keep the logic. Only change the numbers if the new game differs. */
+  B['live-ops']=`<p class="sec-intro">${t(`Features that bring players back and help them past hard levels, mostly paid for with rewarded ads. Their popups are also listed in 6.2.`,
+    `Các tính năng giúp người chơi quay lại game và vượt qua màn khó, phần lớn đổi bằng quảng cáo có thưởng. Popup của chúng cũng có trong danh sách ở mục 6.2.`)}</p>`;
+  const st=(name,sub,desc,go)=>`<div class="state blk"><p class="sn"><span class="yn">${name}</span><small>${sub}</small></p><p>${desc}</p><ul class="go">${go.map(g=>`<li>${g}</li>`).join('')}</ul></div>`;
+  B['limited-time-reward']=
+    sys(nm('Limited Time Reward','Quà giới hạn thời gian'),
+      lead(t(`A free gift on a regular cycle, claimed by watching a rewarded ad. It gives players a reason to come back.`,`Món quà miễn phí lặp lại đều đặn, nhận bằng cách xem quảng cáo có thưởng. Đây là lý do để người chơi quay lại game.`))+
+      tiles([[`200 + 1`,t('Gold + booster (“Gold Brick Package!”)','Vàng + công cụ (“Gold Brick Package!”)')],[t('4 h','4 giờ'),t('Between gifts','Giữa hai lần quà')],[t('10 min','10 phút'),t('To claim','Để nhận quà')],[t('Level 10','Màn 10'),t('Unlocks (remote config)','Mở khóa (cấu hình từ xa)')]])+
+      panel(t('States','Các trạng thái'),`<div class="states">`+
+        st(t('Locked','Đang khóa'),t('Cooling down 4 h','Đang chờ 4 giờ'),
+           t(`No gift yet. The icon is hidden. The 4-hour cooldown counts down in real time.`,`Chưa có quà. Biểu tượng được ẩn. Thời gian chờ 4 giờ đếm ngược theo giờ thực.`),
+           [t(`Cooldown ends and a trigger happens → <b>Available</b>`,`Hết thời gian chờ và có sự kiện kích hoạt → <b>Sẵn sàng</b>`)])+
+        st(t('Available','Sẵn sàng'),t('Popup on screen','Popup đang mở'),
+           t(`The Limited Time Reward popup is open.`,`Popup Quà giới hạn thời gian đang hiện.`),
+           [t(`Player watches the ad and claims → <b>Claimed</b>`,`Người chơi xem quảng cáo và nhận quà → <b>Đã nhận</b>`),t(`Player closes the popup without claiming → <b>Pending</b>`,`Người chơi đóng popup mà không nhận → <b>Chờ nhận</b>`)])+
+        st(t('Claimed','Đã nhận'),t('Cooldown restarts','Bắt đầu chờ lại'),
+           t(`The reward is given with the reward animation.`,`Người chơi nhận quà kèm hiệu ứng nhận thưởng.`),
+           [t(`Straight back to <b>Locked</b>, with a new 4-hour cooldown`,`Quay lại <b>Đang khóa</b>, bắt đầu 4 giờ chờ mới`)])+
+        st(t('Pending','Chờ nhận'),t('HUD icon, 10-minute countdown','Biểu tượng trên HUD, đếm ngược 10 phút'),
+           t(`The gift icon shows on the HUD with a 10-minute countdown. Tapping it reopens the popup.`,`Biểu tượng quà hiện trên HUD kèm đồng hồ 10 phút. Chạm vào để mở lại popup.`),
+           [t(`Player reopens the popup and claims → <b>Claimed</b>`,`Người chơi mở lại popup và nhận quà → <b>Đã nhận</b>`),t(`10 minutes pass → icon disappears, back to <b>Locked</b> with a new 4-hour cooldown`,`Hết 10 phút → biểu tượng biến mất, quay lại <b>Đang khóa</b> với 4 giờ chờ mới`)])+
+        `</div>`)+
+      panel(t('When the popup can open','Khi nào popup có thể hiện'),ul([
+        t(`At session start, if the 4-hour cooldown has passed (following the order in 6.3).`,`Khi mở game, nếu đã qua 4 giờ chờ (theo thứ tự ở mục 6.3).`),
+        t(`When the player returns to Home after completing a level.`,`Khi người chơi quay về màn hình chính sau khi hoàn thành một màn.`),
+        t(`When the player completes a level while the 10-minute claim timer is still running, as a reminder.`,`Khi người chơi hoàn thành một màn trong lúc đồng hồ 10 phút vẫn còn chạy, để nhắc nhận quà.`)
+      ]))+
+      panel(t('Edge cases','Trường hợp đặc biệt'),ul([
+        t(`Ad closed early or failed: no reward. The gift stays as it was (Available or Pending), so the player can try again while there is time left.`,`Quảng cáo bị tắt sớm hoặc lỗi: không nhận được quà. Quà giữ nguyên trạng thái (Sẵn sàng hoặc Chờ nhận) để người chơi thử lại khi còn thời gian.`),
+        t(`The gift is not shown in the store.`,`Quà này không hiện trong cửa hàng.`)
+      ])));
+
+  B['skip-level']=defs([
+    [t('Unlock','Mở khóa'),t(`Level X. Set in remote config, not decided yet.`,`Màn X. Đặt trong cấu hình từ xa, chưa chốt.`)],
+    [t('When it shows','Khi nào hiện'),ul([
+      t(`The Skip Level button shows on the lose screen once the player has failed the same level a number of times in a row (remote config, default 3).`,`Nút Bỏ qua màn hiện ở màn hình thua khi người chơi đã thua cùng một màn nhiều lần liên tiếp (cấu hình từ xa, mặc định 3 lần).`),
+      t(`The fail count resets when the player completes or skips that level.`,`Số lần thua được tính lại từ đầu khi người chơi qua màn hoặc bỏ qua màn đó.`)])],
+    [t('Cost','Chi phí'),t(`Watch 1 rewarded ad, or pay coins (remote config).`,`Xem 1 quảng cáo có thưởng, hoặc trả bằng xu (cấu hình từ xa).`)],
+    [t('Result','Kết quả'),ul([
+      t(`The level counts as completed and the player moves on to the next one.`,`Màn được tính là đã qua và người chơi chuyển sang màn tiếp theo.`),
+      t(`A skipped level gives no coin reward and no win screen bonus.`,`Màn bị bỏ qua không có xu thưởng và không có đồng hồ thưởng thêm.`),
+      t(`It still counts toward the element unlock progress bar.`,`Màn này vẫn được tính vào thanh tiến độ mở khóa yếu tố.`),
+      t(`Skipping does not cost a life.`,`Bỏ qua màn không bị trừ tim.`)])],
+    [t('Limits','Giới hạn'),ul([
+      t(`FTUE levels and levels that introduce a new element or booster cannot be skipped.`,`Không được bỏ qua các màn FTUE và các màn giới thiệu yếu tố hoặc công cụ mới.`),
+      t(`At most 3 skips per day (<code>skip_level_max_per_day</code> in remote config). Every skip counts, whether paid with an ad or with coins.`,`Tối đa 3 lần bỏ qua mỗi ngày (<code>skip_level_max_per_day</code> trong cấu hình từ xa). Mọi lần bỏ qua đều được tính, dù trả bằng quảng cáo hay bằng xu.`),
+      t(`Once the player reaches the limit, the Skip Level button hides on the lose screen until the count resets.`,`Khi đã dùng hết số lần, nút Bỏ qua màn được ẩn ở màn hình thua cho tới khi số lần được tính lại.`),
+      t(`The count resets at the start of each new day, in the device’s local time.`,`Số lần được tính lại vào đầu mỗi ngày mới, theo giờ trên thiết bị.`),
+      t(`Ad closed early or failed: no skip, the attempt does not count toward the limit, and the player stays on the lose screen.`,`Quảng cáo bị tắt sớm hoặc lỗi: không được bỏ qua, lần đó không bị tính vào giới hạn, và người chơi vẫn ở màn hình thua.`)])]
+  ]);
+
+  B['retry-with-booster']=defs([
+    [t('Unlock','Mở khóa'),t(`After the 3rd booster (${P.bo3}) unlocks.`,`Sau khi công cụ thứ 3 (${P.bo3}) được mở.`)],
+    [t('When it shows','Khi nào hiện'),ul([
+      t(`The player restarts a level (from the lose screen or the restart button) while they have 0 ${P.bo3}.`,`Người chơi chơi lại một màn (từ màn hình thua hoặc nút chơi lại) khi đang có 0 ${P.bo3}.`),
+      t(`The popup shows before the level starts again.`,`Popup hiện ra trước khi màn chơi bắt đầu lại.`)])],
+    [t('Cost','Chi phí'),t(`Watch 1 rewarded ad.`,`Xem 1 quảng cáo có thưởng.`)],
+    [t('Result','Kết quả'),ul([
+      t(`The level restarts with 1 free ${P.bo3} already selected.`,`Màn chơi bắt đầu lại với 1 ${P.bo3} miễn phí đã được chọn sẵn.`),
+      t(`The free booster does not come from the player’s own stock. If it is not used in that attempt, it is lost.`,`Công cụ miễn phí này không trừ vào số công cụ người chơi đang có. Nếu không dùng trong lượt chơi đó, công cụ sẽ mất.`),
+      t(`Retrying still costs 1 life as usual, unless unlimited lives are active. With 0 lives, show the refill lives offer instead.`,`Chơi lại vẫn tốn 1 tim như bình thường, trừ khi đang có tim vô hạn. Nếu hết tim, hiện ưu đãi nạp tim thay vào đó.`)])],
+    [t('Limits','Giới hạn'),ul([
+      t(`At most 3 uses per day (<code>retry_booster_max_per_day</code> in remote config). Once reached, the popup no longer shows until the count resets.`,`Tối đa 3 lần mỗi ngày (<code>retry_booster_max_per_day</code> trong cấu hình từ xa). Khi đã dùng hết, popup không hiện nữa cho tới khi số lần được tính lại.`),
+      t(`The count resets at the start of each new day, in the device’s local time.`,`Số lần được tính lại vào đầu mỗi ngày mới, theo giờ trên thiết bị.`),
+      t(`Player closes the popup, or the ad is closed early or fails: the level restarts as normal with no free booster, and the use does not count toward the limit.`,`Người chơi đóng popup, hoặc quảng cáo bị tắt sớm hay lỗi: màn chơi bắt đầu lại như bình thường, không có công cụ miễn phí, và lần đó không bị tính vào giới hạn.`)])]
+  ]);
+
+  /* ===== 8. Change note ===== */
+  /* Add one day() block per day, newest first, with one ent per area changed */
+  const day=(title,body)=>`<div class="sub"><h3><span>${title}</span></h3>${body}</div>`;
+  B['change-note']=`<p class="sec-intro">${t('Changes made to this GDD, newest day first.','Các thay đổi của tài liệu này, ngày mới nhất ở trên cùng.')}</p>`+
+    day(t('25 Oct 2026','25/10/2026'),
+      ent(t('New document','Tài liệu mới'),ul([
+        t(`Created this GDD from the template.`,`Tạo tài liệu này từ template.`),
+        t(`Filled in the game rules, FTUE, elements and boosters from the Wool Crush GDD draft.`,`Điền luật chơi, FTUE, yếu tố đặc biệt và công cụ hỗ trợ từ bản nháp GDD Wool Crush.`),
+        t(`Added the core, element and booster sounds to section 4.`,`Thêm âm thanh lối chơi chính, yếu tố và công cụ vào mục 4.`)
+      ])));
+
+  /* ----- hero ----- */
+  /* PER GAME: one legend row per part of the play-screen sketch (A to E), matching the part-A … part-E groups in fieldSVG */
+  const legend=[
+    ['A',t('Robot','Robot'),t('The character to protect, at the end of the track. The dashed circle is its next backdown position.','Nhân vật cần bảo vệ, đứng cuối đường đi. Vòng nét đứt là vị trí lùi tiếp theo.')],
+    ['B',t('Dragon','Con rồng'),t('Wool segments in one line, crawling along the track toward the robot.','Các đốt len xếp thành một hàng, bò dọc đường đi về phía robot.')],
+    ['C',t('Fog','Sương mù'),t('Covers the top of the track. Boxes cannot match segments under it.','Che phần trên của đường đi. Hộp không ghép được với các đốt bên dưới.')],
+    ['D',t('Parking slots','Ô đỗ'),t('Boxes sit here and pull matching segments. The locked slot opens with a rewarded ad.','Hộp nằm ở đây và kéo các đốt cùng màu. Ô bị khóa mở bằng quảng cáo có thưởng.')],
+    ['E',t('Box pile','Đống hộp'),t('Tap a box to send it to the first free slot. Boxes differ in color and size.','Chạm một hộp để đưa lên ô trống đầu tiên. Các hộp khác nhau về màu và kích cỡ.')]
+  ];
+  const hero=`<div class="hero" id="top" data-sec="top" data-spy="top">
+    <div>
+      <h1>${GAME}</h1>
+      <p class="kind">${ui.sub}</p>
+      <p class="pitch">${t(`Send colored boxes up to pull wool segments out of the dragon, and stop it before it reaches the robot.`,
+                           `Đưa các hộp màu lên để kéo từng đốt len ra khỏi con rồng, và chặn nó trước khi nó chạm tới robot.`)}</p>
+      <ul class="legend">${legend.map(g=>`<li><button type="button" data-part="${g[0]}" aria-pressed="false"><span class="pinl" data-nosearch>${g[0]}</span><span><b>${g[1]}</b><span class="d">${g[2]}</span></span></button></li>`).join('')}</ul>
+    </div>
+    <figure class="field${paused?' paused':''}" id="field">
+      <div class="field-box">${fieldSVG(t('Sketch of a Wool Gather level: the dragon crawls from the fog along a winding track toward the robot, with the parking slots and the box pile below.','Hình minh họa một màn Wool Gather: con rồng bò từ vùng sương theo đường uốn khúc về phía robot, bên dưới là các ô đỗ và đống hộp.'))}</div>
+      <div class="field-foot"><button type="button" class="pause" id="pauseBtn">${paused?ui.play:ui.pause}</button></div>
+      <figcaption>${t(`Simplified sketch. The art and the exact layout are not final.`,
+                       `Hình minh họa đơn giản. Hình ảnh và bố cục chính thức chưa chốt.`)}</figcaption>
+    </figure>
+  </div>`;
+
+  return hero+SECTIONS.map(s=>`
+    <section class="sec" id="${s.id}" data-sec="${s.id}" data-spy="${s.id}">
+      <h2>${cap(s.c,s.n)}<span>${esc(s[l])}</span>${s.wip?wip:''}</h2>
+      ${B[s.id]||''}
+      ${(s.subs||[]).map(u=>`<div class="sub" id="${u.id}" data-sec="${u.id}" data-spy="${u.id}">
+        <h3><span class="num" data-nosearch>${u.n}</span><span>${esc(u[l])}</span>${u.wip?wip:''}</h3>
+        ${B[u.id]||''}
+      </div>`).join('')}
+      ${B[s.id+':after']||''}
+    </section>`).join('');
+}
+
+function tocHTML(l){
+  return `<ol>${SECTIONS.map(s=>`<li><a href="#${s.id}" data-target="${s.id}">${cap(s.c,s.n)}<span class="tl">${esc(s[l])}</span>${s.wip?`<span class="wipt" title="${UI[l].wip}">WIP</span>`:''}</a>${
+    s.subs?`<ol>${s.subs.map(u=>`<li><a href="#${u.id}" data-target="${u.id}"><span class="num">${u.n}</span><span class="tl">${esc(u[l])}</span>${u.wip?`<span class="wipt" title="${UI[l].wip}">WIP</span>`:''}</a></li>`).join('')}</ol>`:''
+  }</li>`).join('')}</ol>`;
+}
+
+/* ---------- state ---------- */
+const root=document.documentElement,main=$('#main'),rail=$('#rail'),panel=$('#panel'),toc=$('#toc'),results=$('#results'),
+      q=$('#q'),hint=$('#hint'),clr=$('#clr'),menuBtn=$('#menuBtn');
+const KEY='capsSortingGddLang';
+let lang='en';
+try{if(/^vi/i.test(navigator.language||''))lang='vi';}catch(e){}
+try{const s=localStorage.getItem(KEY);if(s==='en'||s==='vi')lang=s;}catch(e){}
+
+let index=[],hits=[],cur=-1,spyEls=[],active='top';
+const narrow=window.matchMedia('(max-width:959px)'),statusEl=$('#status');
+const otherCache={};
+
+/* ---------- search ---------- */
+const COMB=/[\u0300-\u036f]/;
+const fold=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase();
+const lower=s=>s.toLowerCase();
+const BLOCK='li,p,tr,h1,h2,h3,h4,figcaption,.blk';
+
+function collect(rootEl){
+  const map=new Map(),out=[];
+  const w=document.createTreeWalker(rootEl,NodeFilter.SHOW_TEXT,{acceptNode(n){
+    if(!n.nodeValue.trim())return NodeFilter.FILTER_REJECT;
+    const p=n.parentElement;
+    if(!p||p.closest('svg,[data-nosearch],script,style'))return NodeFilter.FILTER_REJECT;
+    return NodeFilter.FILTER_ACCEPT;
+  }});
+  while(w.nextNode()){
+    const n=w.currentNode,b=n.parentElement.closest(BLOCK);
+    if(!b)continue;
+    let e=map.get(b);
+    if(!e){e={el:b,nodes:[]};map.set(b,e);out.push(e);}
+    e.nodes.push(n);
+  }
+  out.forEach(e=>{
+    e.text=e.nodes.map(n=>n.nodeValue.replace(/\s+/g,' ').trim()).join(' ');
+    e.fold=fold(e.text);e.lower=lower(e.text);
+    const s=e.el.closest('[data-sec]');e.sec=s?s.dataset.sec:'top';
+  });
+  return out;
+}
+const LETTER=/\p{L}/u;
+function term(w){
+  const lo=lower(w),fo=fold(w),strict=fo!==lo;         // typed with accents → match accents exactly
+  const s=strict?lo:fo;
+  return {s,strict,whole:s.length===1};                // a single letter (e.g. “ô”) only matches as a whole word
+}
+function parseTerms(raw){
+  return raw.normalize('NFC').trim().split(/\s+/).filter(Boolean).map(term).filter(tm=>tm.s.length>=2||tm.strict);
+}
+/* a multi-word query is tried as an exact phrase first, then as “all of these words” */
+function resolveTerms(list,raw){
+  const terms=parseTerms(raw);
+  if(terms.length>1){
+    const phrase=[term(raw.normalize('NFC').trim().replace(/\s+/g,' '))];
+    const m=matchIn(list,phrase);
+    if(m.length)return {terms:phrase,matched:m};
+  }
+  return {terms,matched:terms.length?matchIn(list,terms):[]};
+}
+function mapStr(str,fn){
+  let f='';const map=[];
+  for(let i=0;i<str.length;i++){const c=fn(str[i]);for(let k=0;k<c.length;k++){f+=c[k];map.push(i);}}
+  return {f,map};
+}
+function findRanges(str,terms){
+  const res=[];let fm=null,lm=null;
+  terms.forEach(tm=>{
+    const m=tm.strict?(lm||(lm=mapStr(str,lower))):(fm||(fm=mapStr(str,fold)));
+    let i=0;
+    while((i=m.f.indexOf(tm.s,i))!==-1){
+      const a=m.map[i];let b=m.map[i+tm.s.length-1]+1;
+      while(b<str.length&&COMB.test(str[b]))b++;
+      if(!tm.whole||(!(a>0&&LETTER.test(str[a-1]))&&!(b<str.length&&LETTER.test(str[b]))))res.push([a,b]);
+      i+=tm.s.length;
+    }
+  });
+  res.sort((x,y)=>x[0]-y[0]);
+  const merged=[];
+  res.forEach(r=>{const last=merged[merged.length-1];if(last&&r[0]<=last[1])last[1]=Math.max(last[1],r[1]);else merged.push(r.slice());});
+  return merged;
+}
+function markNode(node,terms){
+  const rs=findRanges(node.nodeValue,terms);
+  for(let i=rs.length-1;i>=0;i--){
+    const r=document.createRange();r.setStart(node,rs[i][0]);r.setEnd(node,rs[i][1]);
+    const m=document.createElement('mark');m.className='hit';
+    try{r.surroundContents(m);}catch(e){}
+  }
+}
+function clearMarks(){
+  $$('mark.hit',main).forEach(m=>{const p=m.parentNode;p.replaceChild(document.createTextNode(m.textContent),m);p.normalize();});
+}
+function markedHTML(str,terms){
+  const rs=findRanges(str,terms);let h='',pos=0;
+  rs.forEach(r=>{h+=esc(str.slice(pos,r[0]))+'<mark>'+esc(str.slice(r[0],r[1]))+'</mark>';pos=r[1];});
+  return h+esc(str.slice(pos));
+}
+function snippet(e,terms){
+  const txt=e.text,rs=findRanges(txt,terms),first=rs.length?rs[0][0]:0;
+  let a=Math.max(0,first-34),b=Math.min(txt.length,first+92);
+  if(a>0){const sp=txt.indexOf(' ',a);if(sp!==-1&&sp<first)a=sp+1;}
+  if(b<txt.length){const sp=txt.lastIndexOf(' ',b);if(sp>first+12)b=sp;}
+  return (a>0?'…':'')+markedHTML(txt.slice(a,b),terms)+(b<txt.length?'…':'');
+}
+function crumb(id){
+  const s=SEC[id];return s?s.n+' '+s[lang]:UI[lang].overview;
+}
+function matchIn(list,terms){return list.filter(e=>terms.every(tm=>(tm.strict?e.lower:e.fold).includes(tm.s)&&findRanges(e.text,[tm]).length));}
+
+function runSearch(fromInput){
+  const ui=UI[lang];
+  clearMarks();
+  index=collect(main);
+  const raw=q.value,found=resolveTerms(index,raw),terms=found.terms;
+  hits=[];cur=-1;
+  clr.hidden=!raw;
+  if(!terms.length){
+    rail.dataset.view='toc';results.innerHTML='';statusEl.textContent='';
+    hint.textContent='/';hint.classList.add('key');hint.hidden=!!raw;
+    if(fromInput)setOpen(false);
+    return;
+  }
+  const matched=found.matched;
+  matched.forEach(e=>e.nodes.forEach(n=>markNode(n,terms)));
+  hits=matched.map(e=>e.el);
+  rail.dataset.view='results';
+  statusEl.textContent=matched.length?ui.matches(matched.length):ui.none(raw.trim());
+  hint.classList.remove('key');hint.hidden=false;hint.textContent=String(hits.length);
+  if(matched.length){
+    results.innerHTML=`<div class="res-head"><span>${ui.matches(matched.length)}</span><button type="button" class="linkbtn" data-clear>${ui.clear}</button></div>`+
+      matched.map((e,i)=>`<a class="res" href="#${e.sec}" data-hit="${i}"><span class="crumb">${esc(crumb(e.sec))}</span><span class="snip">${snippet(e,terms)}</span></a>`).join('')+
+      `<p class="res-tip">${ui.tip}</p>`;
+  }else{
+    const o=lang==='en'?'vi':'en';
+    if(!otherCache[o]){const d=document.createElement('div');d.innerHTML=view(o);otherCache[o]=collect(d);}
+    const n=resolveTerms(otherCache[o],raw).matched.length;
+    results.innerHTML=`<div class="res-empty"><p>${esc(ui.none(raw.trim()))}</p>`+
+      (n?`<p class="muted">${ui.other(n)}</p><button type="button" class="linkbtn" data-set-lang="${o}">${ui.switchTo}</button>`
+        :`<p class="muted">${ui.tryShort}</p>`)+`</div>`;
+  }
+  if(fromInput)setOpen(true);
+}
+function goHit(i){
+  if(!hits.length)return;
+  cur=(i+hits.length)%hits.length;
+  const el=hits[cur];
+  el.scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'center'});
+  el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');
+  hint.textContent=(cur+1)+'/'+hits.length;
+  $$('.res',results).forEach(a=>{
+    const on=+a.dataset.hit===cur;
+    if(on){a.setAttribute('aria-current','true');keepVisible(a);}else a.removeAttribute('aria-current');
+  });
+}
+function clearSearch(focus){q.value='';runSearch(true);if(focus)q.focus();}
+
+/* ---------- contents panel ---------- */
+function setOpen(on){rail.dataset.open=on?'1':'';menuBtn.setAttribute('aria-expanded',on?'true':'false');}
+function keepVisible(el){
+  if(!el||getComputedStyle(panel).position==='absolute'&&rail.dataset.open!=='1')return;
+  const p=panel.getBoundingClientRect(),r=el.getBoundingClientRect();
+  if(r.top<p.top+8)panel.scrollTop-=(p.top+8-r.top);
+  else if(r.bottom>p.bottom-8)panel.scrollTop+=(r.bottom-p.bottom+8);
+}
+function spy(){
+  if(!spyEls.length)return;
+  const line=(parseFloat(getComputedStyle(root).getPropertyValue('--bar-h'))||0)+110;
+  let id=spyEls[0].dataset.spy;
+  for(const el of spyEls){if(el.getBoundingClientRect().top<=line)id=el.dataset.spy;else break;}
+  if(window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-4&&window.scrollY>0)id=spyEls[spyEls.length-1].dataset.spy;
+  if(id===active&&$('.toc a.on'))return;
+  active=id;
+  $$('.toc a').forEach(a=>{
+    const on=a.dataset.target===id;
+    a.classList.toggle('on',on);
+    if(on){a.setAttribute('aria-current','location');keepVisible(a);}else a.removeAttribute('aria-current');
+  });
+}
+let ticking=false;
+function onScroll(){if(ticking)return;ticking=true;requestAnimationFrame(()=>{ticking=false;spy();});}
+
+function jump(id){
+  if(id==='top'){window.scrollTo({top:0,behavior:reduceMotion?'auto':'smooth'});}
+  else{const el=document.getElementById(id);if(!el)return;el.scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'start'});}
+  try{history.replaceState(null,'',id==='top'?location.pathname+location.search:'#'+id);}catch(e){}
+}
+
+/* ---------- element demo engine (Web Animations, one loop per demo) ---------- */
+let demoStates=[],demoIO=null;
+function kfs(frames,prop,D){
+  const f=frames.slice().sort((a,b)=>a[0]-b[0]);
+  if(f[0][0]>0)f.unshift([0,f[0][1]]);
+  if(f[f.length-1][0]<D)f.push([D,f[f.length-1][1]]);
+  return f.map(([t,v,e])=>({offset:Math.min(1,Math.max(0,t/D)),[prop]:v,easing:e||'ease-in-out'}));
+}
+function applyDemo(st){const run=st.vis&&!st.user;st.anims.forEach(a=>{try{if(run)a.play();else a.pause();}catch(e){}});}
+function startDemos(){
+  demoStates.forEach(st=>st.anims.forEach(a=>{try{a.cancel();}catch(e){}}));demoStates=[];
+  if(demoIO){demoIO.disconnect();demoIO=null;}
+  if(!Element.prototype.animate)return;
+  $$('.demo',main).forEach(fig=>{
+    const def=DEMOS[fig.dataset.demo];if(!def)return;
+    const D=def.D,anims=[];
+    [['.scene','opacity',[[0,0],[.35,1],[D-.45,1],[D,0]]]].concat(def.tracks()).forEach(([sel,prop,frames])=>{
+      fig.querySelectorAll(sel).forEach(el=>{try{anims.push(el.animate(kfs(frames,prop,D),{duration:D*1000,iterations:Infinity}));}catch(e){}});
+    });
+    const st={fig,anims,user:false,vis:true};fig._demo=st;demoStates.push(st);
+  });
+  if('IntersectionObserver' in window){
+    demoIO=new IntersectionObserver(es=>es.forEach(e=>{const st=e.target._demo;if(!st)return;st.vis=e.isIntersecting;applyDemo(st);}),{rootMargin:'120px 0px'});
+    demoStates.forEach(st=>demoIO.observe(st.fig));
+  }
+}
+
+/* ---------- render + language ---------- */
+function render(){
+  const ui=UI[lang];
+  root.lang=lang;root.dataset.lang=lang;document.title=ui.title;
+  main.innerHTML=view(lang);
+  toc.innerHTML=tocHTML(lang);
+  $('#brandSub').textContent=ui.sub;
+  q.placeholder=narrow.matches?ui.searchShort:ui.search;q.setAttribute('aria-label',ui.search);
+  clr.setAttribute('aria-label',ui.clear);
+  menuBtn.setAttribute('aria-label',ui.contents);toc.setAttribute('aria-label',ui.contents);
+  $('#langSwitch').setAttribute('aria-label',ui.language);
+  $$('#langSwitch [data-set-lang]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.setLang===lang?'true':'false'));
+  spyEls=$$('[data-spy]',main);
+  runSearch(false);
+  spy();
+  startDemos();
+  gaugeUI();
+  if(G.swing&&!G.raf)G.raf=requestAnimationFrame(gaugeTick);
+}
+function setLang(l){
+  if(l===lang||(l!=='en'&&l!=='vi'))return;
+  const anchor=document.getElementById(active),before=anchor?anchor.getBoundingClientRect().top:null,atTop=window.scrollY<8;
+  lang=l;
+  try{localStorage.setItem(KEY,l);}catch(e){}
+  render();
+  if(!atTop&&before!==null){
+    const el=document.getElementById(active);
+    if(el)window.scrollBy(0,el.getBoundingClientRect().top-before);
+  }
+  spy();
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+  const tg=e.target;
+  const lb=tg.closest('[data-set-lang]');
+  if(lb){setLang(lb.dataset.setLang);return;}
+  if(tg.closest('[data-clear]')||tg.closest('#clr')){clearSearch(true);return;}
+  if(tg.closest('#menuBtn')){
+    const open=rail.dataset.open==='1';
+    if(!open)rail.dataset.view='toc';
+    setOpen(!open);
+    if(!open)keepVisible($('.toc a.on'));
+    return;
+  }
+  const a=tg.closest('a[href^="#"]');
+  if(a){
+    e.preventDefault();
+    if(a.dataset.hit!=null)goHit(+a.dataset.hit);
+    else jump(decodeURIComponent(a.getAttribute('href').slice(1)));
+    setOpen(false);
+    return;
+  }
+  const db=tg.closest('.demo-btn');
+  if(db){const st=db.closest('.demo')._demo;const on=db.getAttribute('aria-pressed')!=='true';db.setAttribute('aria-pressed',on?'true':'false');db.setAttribute('aria-label',on?UI[lang].playDemo:UI[lang].pauseDemo);if(st){st.user=on;applyDemo(st);}return;}
+  if(tg.closest('#gBonus')){
+    if(G.swing){G.swing=false;G.res='bonus';}
+    else{G.res=null;startSwing();}
+    gaugeUI();return;
+  }
+  if(tg.closest('#gNext')){G.res='next';startSwing();gaugeUI();return;}
+  const pb=tg.closest('#pauseBtn');
+  if(pb){paused=!paused;$('#field').classList.toggle('paused',paused);pb.textContent=paused?UI[lang].play:UI[lang].pause;return;}
+  const lg=tg.closest('.legend button');
+  if(lg){
+    const was=lg.getAttribute('aria-pressed')==='true';
+    $$('.legend button').forEach(b=>b.setAttribute('aria-pressed','false'));
+    if(!was){lg.setAttribute('aria-pressed','true');$('#field').dataset.hl=lg.dataset.part;}
+    else delete $('#field').dataset.hl;
+    return;
+  }
+  if(!tg.closest('.rail'))setOpen(false);
+});
+function hoverPart(e,on){
+  const b=e.target.closest&&e.target.closest('.legend button');if(!b)return;
+  const f=$('#field');if(!f)return;
+  if(on)f.dataset.hl=b.dataset.part;
+  else{const p=$('.legend button[aria-pressed="true"]');if(p)f.dataset.hl=p.dataset.part;else delete f.dataset.hl;}
+}
+main.addEventListener('mouseover',e=>hoverPart(e,true));
+main.addEventListener('mouseout',e=>hoverPart(e,false));
+main.addEventListener('focusin',e=>hoverPart(e,true));
+main.addEventListener('focusout',e=>hoverPart(e,false));
+
+q.addEventListener('input',()=>runSearch(true));
+q.addEventListener('focus',()=>{if(parseTerms(q.value).length){rail.dataset.view='results';setOpen(true);}});
+q.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();if(hits.length){goHit(cur+(e.shiftKey?-1:1));setOpen(false);}}
+  else if(e.key==='Escape'){e.preventDefault();if(q.value)clearSearch(true);else{setOpen(false);q.blur();}}
+});
+document.addEventListener('keydown',e=>{
+  const el=document.activeElement,typing=el&&(el.tagName==='INPUT'||el.tagName==='TEXTAREA'||el.isContentEditable);
+  if((e.key==='/'&&!typing&&!e.ctrlKey&&!e.metaKey&&!e.altKey)||((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k')){e.preventDefault();q.focus();q.select();}
+  else if(e.key==='Escape'&&!typing)setOpen(false);
+});
+window.addEventListener('scroll',onScroll,{passive:true});
+window.addEventListener('resize',onScroll);
+const onNarrow=()=>{q.placeholder=narrow.matches?UI[lang].searchShort:UI[lang].search;if(!narrow.matches)setOpen(false);};
+if(narrow.addEventListener)narrow.addEventListener('change',onNarrow);else if(narrow.addListener)narrow.addListener(onNarrow);
+
+render();
+try{
+  const h=decodeURIComponent((location.hash||'').slice(1));
+  if(h&&document.getElementById(h))requestAnimationFrame(()=>{document.getElementById(h).scrollIntoView({block:'start'});spy();});
+}catch(e){}
+})();
+</script>
+</body>
+</html>
