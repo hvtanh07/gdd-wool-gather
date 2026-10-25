@@ -1304,17 +1304,16 @@ function view(l){
       t(`On impact the ice breaks, and the attacking box bounces back to its starting position.`,
         `Khi va chạm, băng vỡ, và hộp tấn công bật về vị trí ban đầu.`),
       t(`Once free, the box behaves like a normal box.`,
-        `Sau khi hết băng, hộp hoạt động như hộp thường.`)
+        `Sau khi hết băng, hộp hoạt động như hộp thường.`),
+      `<b>${t('Fail-safe','Chống kẹt')}:</b> ${t(`if no other box remains to break the ice, the ice breaks by itself.`,`nếu không còn hộp nào khác để phá băng, băng tự vỡ.`)} <a href="#lock-fail-safe">${t('See “Fail-safe”.','Xem mục “Cơ chế chống kẹt”.')}</a>`
     ]),unlock(17),demo('frozen'))+
     ent(nm('Fail-safe','Cơ chế chống kẹt'),ul([
-      t(`The source GDD does not define a fail-safe for these elements. TBD.`,
-        `GDD gốc chưa mô tả cơ chế chống kẹt cho các yếu tố này. Chưa chốt.`),
-      t(`Cases to confirm:`,`Các trường hợp cần xác nhận:`)+ol([
-        t(`Only frozen boxes are left, and no free box can reach them to break the ice.`,
-          `Chỉ còn lại hộp đóng băng, và không còn hộp thường nào có thể đâm vỡ băng.`),
-        t(`The boxes left cannot hold all the segments still on the dragon.`,
-          `Các hộp còn lại không đủ chỗ chứa hết số đốt còn trên thân rồng.`)
-      ])
+      t(`${P.el3} needs another box to break its ice, so the level could get stuck when no such box is left.`,
+        `${P.el3} cần một hộp khác để phá băng, nên màn chơi có thể bị kẹt khi không còn hộp nào như vậy.`),
+      t(`Rule: if no other box remains to break the ice, the ice breaks by itself automatically. The box then behaves like a normal box.`,
+        `Quy tắc: nếu không còn hộp nào khác để phá băng, băng tự động vỡ. Sau đó hộp hoạt động như hộp thường.`),
+      t(`Still to confirm: the boxes left cannot hold all the segments still on the dragon. TBD.`,
+        `Còn cần xác nhận: các hộp còn lại không đủ chỗ chứa hết số đốt còn trên thân rồng. Chưa chốt.`)
     ])).replace('<div class="ent">','<div class="ent" id="lock-fail-safe">');
 
   const buy=t(`Bought with coins or a rewarded ad. The player still has to activate it manually.`,
@@ -1411,11 +1410,10 @@ function view(l){
   B['booster-tutorial']=table(t('Booster tutorial','Hướng dẫn công cụ hỗ trợ'),
     [t('Booster','Công cụ'),t('Popup text','Nội dung popup'),t('Unlocks at level','Mở ở màn'),t('Free boosters','Số lượt tặng')],
     [
-      [N.bo1,popup('Remove 1 box from the parking slots.','Loại bỏ 1 hộp khỏi ô đỗ.'),lvl(3),lvl(3)],
+      [N.bo1,popup('Remove 1 box from the board.','Loại bỏ 1 hộp khỏi bàn chơi.'),lvl(3),lvl(3)],
       [N.bo2,popup('Shuffle line of colors.','Xáo trộn dãy màu.'),lvl(6),lvl(3)],
       [N.bo3,popup('Clear the fog.','Xua tan sương mù.'),lvl(9),lvl(3)]
-    ])+`<p class="note">${t(`To confirm: the ${P.bo1} popup says “from the parking slots”, but 1.5 says boxes already in the parking slots cannot be picked.`,
-      `Cần xác nhận: popup ${P.bo1} ghi “khỏi ô đỗ”, nhưng mục 1.5 ghi không chọn được hộp đã nằm trong ô đỗ.`)}</p>`;
+    ]);
 
   /* PER GAME: every element and booster with its unlock level, sorted by level */
   const stops=[
@@ -1801,6 +1799,10 @@ function view(l){
   const day=(title,body)=>`<div class="sub"><h3><span>${title}</span></h3>${body}</div>`;
   B['change-note']=`<p class="sec-intro">${t('Changes made to this GDD, newest day first.','Các thay đổi của tài liệu này, ngày mới nhất ở trên cùng.')}</p>`+
     day(t('25 Oct 2026','25/10/2026'),
+      ent(t('Fail-safe and booster tutorial','Chống kẹt và hướng dẫn công cụ'),ul([
+        t(`${P.el3} fail-safe: if no other box remains to break the ice, the ice breaks by itself.`,`Chống kẹt cho ${P.el3}: nếu không còn hộp nào khác để phá băng, băng tự vỡ.`),
+        t(`${P.bo1} popup text is now “Remove 1 box from the board.”`,`Nội dung popup ${P.bo1} đổi thành “Remove 1 box from the board.”`)
+      ]))+
       ent(t('New document','Tài liệu mới'),ul([
         t(`Created this GDD from the template.`,`Tạo tài liệu này từ template.`),
         t(`Filled in the game rules, FTUE, elements and boosters from the Wool Crush GDD draft.`,`Điền luật chơi, FTUE, yếu tố đặc biệt và công cụ hỗ trợ từ bản nháp GDD Wool Crush.`),
