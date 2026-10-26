@@ -9,9 +9,9 @@ Mở file trong trình duyệt là xem được ngay. Mỗi placeholder hiện t
 | Mục | Loại | Khi làm game mới |
 |---|---|---|
 | Hero (tên game, câu giới thiệu, hình màn chơi A–E) | **Theo game** | Viết lại toàn bộ |
-| 1.1 Gameplay overview | **Theo game** | Cách chơi, thắng/thua, hồi sinh làm gì |
+| 1.1 Gameplay overview | **Theo game** | Cách chơi, thắng/thua |
 | 1.2 Main game mechanics | **Theo game** | Một `ent` cho mỗi đối tượng chính |
-| 1.3 Additional mechanics | Cố định | Giữ logic (tim và tim vô hạn, thanh mở khóa yếu tố, RV Slot, thưởng thêm ở màn hình thắng), chỉ đổi số. Đổi `GBASE` cho khớp `level_win_coin` |
+| 1.3 Additional mechanics | Cố định | Giữ logic (tim và tim vô hạn, thanh mở khóa yếu tố, thưởng thêm ở màn hình thắng, RV Slot, lặp lại màn chơi, hồi sinh), chỉ đổi số. Đổi `GBASE` cho khớp `level_win_coin` |
 | 1.4 Elements | **Theo game** | Một `ent` cho mỗi yếu tố, cộng mục Fail-safe |
 | 1.5 Boosters | **Theo game** | Một `ent` cho mỗi công cụ |
 | 2.1 FTUE logic | Cố định | Giữ nguyên |
@@ -19,7 +19,7 @@ Mở file trong trình duyệt là xem được ngay. Mỗi placeholder hiện t
 | 3 Object set & animation | **Theo game** | Concept, bảng màu, chuyển động |
 | 4 SFX & haptics | Một phần | Giữ các dòng UI, thay dòng core/element/booster |
 | 5 Remote config | Cố định | Giữ mọi key, chỉ đổi giá trị |
-| 6 IAP & offers | Cố định | Giữ logic. Đổi `const PID='game.name'` thành tiền tố product ID của game (ví dụ `sushi.sort` → `sushi.sort.starter_pack`), đổi giá/số lượng nếu khác. 6.1 là danh sách gói, 6.2 là danh sách popup: thêm hoặc sửa gói, popup ở đây trước |
+| 6 IAP & offers | Cố định | Giữ logic. Đổi `const PID='game.name'` thành tiền tố product ID của game (ví dụ `sushi.sort` → `sushi.sort.starter_pack`), đổi giá/số lượng nếu khác. 6.1 là danh sách gói, 7.1 là danh sách popup: thêm hoặc sửa gói, popup ở đây trước |
 | 7 Live ops | Cố định | Giữ logic, chỉ đổi số |
 | 8 Change note | **Theo game** | Bắt đầu bằng một mục ngày tạo tài liệu |
 
