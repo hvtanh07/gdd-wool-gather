@@ -1231,7 +1231,28 @@ function view(l){
         t(`Revive count and price reset on a new attempt.`,`Số lần và giá hồi sinh tính lại khi bắt đầu lượt mới.`),
         t(`Ad or purchase fails: back to the popup. Input locked while the slots clear and the dragon moves back.`,`Quảng cáo hoặc giao dịch lỗi: quay lại popup. Khóa thao tác khi ô đỗ đang dọn và rồng đang lùi.`),
         t(`A box needs more segments of its color than the dragon still has: TBD.`,`Hộp cần nhiều đốt cùng màu hơn số đốt còn trên thân rồng: Chưa chốt.`)
-      ])));
+      ])))+
+
+    sys(nm('Home screen (level tree)','Màn hình chính (cây màn chơi)'),
+      lead(t(`Home shows the next levels as a vertical tree above the Play button.`,
+             `Màn hình chính hiện các màn sắp chơi thành một cây dọc phía trên nút Chơi.`))+
+      panel(t('Parts','Thành phần'),
+        `<ul class="parts">
+          <li><span class="pinl" data-nosearch>A</span><span><b>HUD</b><span class="d">${t(`Settings, lives with refill timer, coins.`,`Cài đặt, số tim kèm đồng hồ hồi tim, số xu.`)}</span></span></li>
+          <li><span class="pinl" data-nosearch>B</span><span><b>${nm('Level tree','Cây màn chơi')}</b><span class="d">${t(`Level nodes on a road, counting up from the bottom (29, 30, 31 …). The top node may sit partly under the HUD.`,`Các nút màn trên một con đường, số tăng dần từ dưới lên (29, 30, 31 …). Nút trên cùng có thể bị HUD che một phần.`)}</span></span></li>
+          <li><span class="pinl" data-nosearch>C</span><span><b>${nm('Play button','Nút Chơi')}</b><span class="d">${t(`Shows “Level N”. Tap to start the next level.`,`Hiện “Level N”. Chạm để vào màn tiếp theo.`)}</span></span></li>
+        </ul>`)+
+      panel(t('Rules','Quy tắc'),ul([
+        t(`The next level is always the bottom node, closest to the Play button.`,`Màn tiếp theo luôn là nút dưới cùng, gần nút Chơi nhất.`),
+        t(`The player cannot scroll the level tree.`,`Người chơi không cuộn được cây màn chơi.`),
+        t(`Hard levels are highlighted in purple and their node is slightly bigger than a normal one.`,`Màn khó được làm nổi bật bằng màu tím, và nút màn to hơn nút thường một chút.`)
+      ]))+
+      panel(t('Normal and Hard level','Màn thường và màn khó'),
+        table(t('Normal and Hard level on Home','Màn thường và màn khó ở màn hình chính'),[t('Part','Thành phần'),t('Normal','Thường'),t('Hard','Khó')],[
+          [t('Level node','Nút màn'),t('Green triangle','Tam giác xanh lá'),t('Purple triangle, slightly bigger, white outline, “HARD” tag under the number','Tam giác tím, to hơn một chút, viền trắng, nhãn “HARD” dưới con số')],
+          [t('Play button (next level only)','Nút Chơi (chỉ màn tiếp theo)'),t('Green, “Level N”','Xanh lá, “Level N”'),t('Purple, “Level N” and “HARD” on a second line','Tím, “Level N” và dòng thứ hai “HARD”')]
+        ],'compact')+
+        `<p class="note">${t(`Which levels are Hard comes from the level config. TBD.`,`Màn nào là màn khó lấy từ cấu hình màn chơi. Chưa chốt.`)}</p>`));
 
   /* PER GAME: one caption per entry in DEMOS, same keys. The first ten are the template's example demos. */
   const DCAP={
@@ -1691,6 +1712,10 @@ function view(l){
   /* Add one day() block per day, newest first, with one ent per area changed */
   const day=(title,body)=>`<div class="sub"><h3><span>${title}</span></h3>${body}</div>`;
   B['change-note']=`<p class="sec-intro">${t('Changes made to this GDD, newest day first.','Các thay đổi của tài liệu này, ngày mới nhất ở trên cùng.')}</p>`+
+    day(t('26 Oct 2026','26/10/2026'),
+      ent(t('Home screen','Màn hình chính'),ul([
+        t(`Added the Home screen level tree to 1.3: the next level sits at the bottom near the Play button, no scrolling, Hard levels in purple with a bigger node.`,`Thêm cây màn chơi ở màn hình chính vào mục 1.3: màn tiếp theo nằm dưới cùng gần nút Chơi, không cuộn được, màn khó màu tím và nút to hơn.`)
+      ])))+
     day(t('25 Oct 2026','25/10/2026'),
       ent(t('Template update: shorter format, loop from level 21','Cập nhật template: format gọn hơn, lặp từ màn 21'),ul([
         t(`Followed the new template: shorter text and tables in 1.3, 2.1, 6 and 7. Skip Level and Retry with Booster are now one section (7.2).`,`Theo template mới: chữ gọn hơn và dùng bảng ở mục 1.3, 2.1, 6 và 7. Bỏ qua màn và Chơi lại kèm công cụ gộp thành một mục (7.2).`),
