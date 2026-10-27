@@ -479,7 +479,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const reduceMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const GAME='Wool Gather';  /* PER GAME: the game's name, used in the hero and the tab title */
 const GBASE=40;  /* win-screen base coin reward, matches level_win_coin */
-const PID='wool.gather';  /* PER GAME: product ID prefix for every IAP pack, e.g. 'sushi.sort' gives sushi.sort.starter_pack */
+const PID='wg';  /* PER GAME: product ID prefix for every IAP pack, e.g. 'sushi.sort' gives sushi.sort.starter_pack */
 
 /* crown-cap outline: a real bottle cap has 21 teeth */
 (function(){
@@ -1552,7 +1552,7 @@ function view(l){
     rc(t('Unlock popups — offer unlock level','Popup mở khóa — màn mở ưu đãi'),[
       ['starter_pack_unlock_level',t('Starter Pack (IAP) — level from which the offer popup can show','Gói Khởi đầu (IAP) — màn bắt đầu có thể hiện popup ưu đãi'),'12',t('level','màn')],
       ['remove_ads_unlock_level',t('Remove Ads (IAP) — level from which the offer popup can show','Gỡ quảng cáo (IAP) — màn bắt đầu có thể hiện popup ưu đãi'),'15',t('level','màn')],
-      ['garage_gift_unlock_level',t('Limited Time Reward / Garage Gift (rewarded ad) — level from which the gift popup can show','Quà giới hạn thời gian / Garage Gift (quảng cáo thưởng) — màn bắt đầu có thể hiện popup quà'),'10',t('level','màn')]
+      ['garage_gift_unlock_level',t('Limited Time Reward / Tool Box Package! (rewarded ad) — level from which the gift popup can show','Quà giới hạn thời gian / Tool Box Package! (quảng cáo thưởng) — màn bắt đầu có thể hiện popup quà'),'10',t('level','màn')]
     ])+
     rc(t('Live ops','Live Ops'),[
       ['skip_level_max_per_day',t('Skip Level — max skips per day (ad or coins). The count resets each new day.','Bỏ qua màn — số lần bỏ qua tối đa mỗi ngày (bằng quảng cáo hoặc xu). Số lần được tính lại mỗi ngày mới.'),'3',t('count','lần')],
@@ -1705,7 +1705,7 @@ function view(l){
   B['limited-time-reward']=
     sys(nm('Limited Time Reward','Quà giới hạn thời gian'),
       lead(t(`A free gift claimed with a rewarded ad. Shows once per cycle, at the 1st Level Complete or new game session after the cooldown.`,`Quà miễn phí nhận bằng quảng cáo có thưởng. Hiện 1 lần mỗi chu kỳ, ở Level Complete hoặc phiên chơi mới đầu tiên sau khi hết cooldown.`))+
-      tiles([[`200 + 1`,t('Gold + booster (“Gold Brick Package!”)','Vàng + công cụ (“Gold Brick Package!”)')],[t('10 min','10 phút'),t('Timer, from when it shows','Timer, tính từ lúc hiện')],[t('4 h','4 giờ'),t('Cooldown after the timer','Cooldown sau khi hết timer')],[t('Level 10','Màn 10'),t('Unlocks','Mở khóa')]])+
+      tiles([[`200 + 1`,t('Gold + booster (“Tool Box Package!”)','Vàng + công cụ (“Tool Box Package!”)')],[t('10 min','10 phút'),t('Timer, from when it shows','Timer, tính từ lúc hiện')],[t('4 h','4 giờ'),t('Cooldown after the timer','Cooldown sau khi hết timer')],[t('Level 10','Màn 10'),t('Unlocks','Mở khóa')]])+
       panel(t('Popup appear logic','Logic hiện popup'),
         table(t('Limited Time Reward cycle','Chu kỳ Quà giới hạn thời gian'),[t('State','Trạng thái'),t('Player sees','Người chơi thấy'),t('Next','Tiếp theo')],[
           [t('Cooldown','Cooldown'),t('Nothing. 4 h runs, also offline.','Không có gì. Đếm 4 giờ, kể cả khi offline.'),t('Ends → Ready','Hết giờ → Chờ hiện')],
@@ -1745,6 +1745,11 @@ function view(l){
   /* Add one day() block per day, newest first, with one ent per area changed */
   const day=(title,body)=>`<div class="sub"><h3><span>${title}</span></h3>${body}</div>`;
   B['change-note']=`<p class="sec-intro">${t('Changes made to this GDD, newest day first.','Các thay đổi của tài liệu này, ngày mới nhất ở trên cùng.')}</p>`+
+    day(t('27 Oct 2026','27/10/2026'),
+      ent(t('Pack IDs and reward name','Mã gói và tên quà'),ul([
+        t(`Product ID prefix changed from <code>wool.gather</code> to <code>wg</code> (e.g. <code>wg.starter_pack</code>), following the pack table.`,`Đổi tiền tố mã sản phẩm từ <code>wool.gather</code> sang <code>wg</code> (ví dụ <code>wg.starter_pack</code>), theo bảng gói.`),
+        t(`The Limited Time Reward gift is now named “Tool Box Package!” (200 gold + 1 booster, no product ID).`,`Quà của Quà giới hạn thời gian giờ tên là “Tool Box Package!” (200 vàng + 1 công cụ, không có mã sản phẩm).`)
+      ])))+
     day(t('26 Oct 2026','26/10/2026'),
       ent(t('Home screen','Màn hình chính'),ul([
         t(`Added the Home screen level tree to 1.3: the next level sits at the bottom near the Play button, no scrolling, Hard levels in purple with a bigger node.`,`Thêm cây màn chơi ở màn hình chính vào mục 1.3: màn tiếp theo nằm dưới cùng gần nút Chơi, không cuộn được, màn khó màu tím và nút to hơn.`)
