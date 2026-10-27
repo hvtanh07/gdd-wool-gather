@@ -1705,7 +1705,7 @@ function view(l){
   B['limited-time-reward']=
     sys(nm('Limited Time Reward','Quà giới hạn thời gian'),
       lead(t(`A free gift claimed with a rewarded ad. Shows once per cycle, at the 1st Level Complete or new game session after the cooldown.`,`Quà miễn phí nhận bằng quảng cáo có thưởng. Hiện 1 lần mỗi chu kỳ, ở Level Complete hoặc phiên chơi mới đầu tiên sau khi hết cooldown.`))+
-      tiles([[`200 + 1`,t('Gold + booster (“Tool Box Package!”)','Vàng + công cụ (“Tool Box Package!”)')],[t('10 min','10 phút'),t('Timer, from when it shows','Timer, tính từ lúc hiện')],[t('4 h','4 giờ'),t('Cooldown after the timer','Cooldown sau khi hết timer')],[t('Level 10','Màn 10'),t('Unlocks','Mở khóa')]])+
+      tiles([[`200 + 1`,t('Gold + booster (“Gold Brick Package!”)','Vàng + công cụ (“Gold Brick Package!”)')],[t('10 min','10 phút'),t('Timer, from when it shows','Timer, tính từ lúc hiện')],[t('4 h','4 giờ'),t('Cooldown after the timer','Cooldown sau khi hết timer')],[t('Level 10','Màn 10'),t('Unlocks','Mở khóa')]])+      
       panel(t('Popup appear logic','Logic hiện popup'),
         table(t('Limited Time Reward cycle','Chu kỳ Quà giới hạn thời gian'),[t('State','Trạng thái'),t('Player sees','Người chơi thấy'),t('Next','Tiếp theo')],[
           [t('Cooldown','Cooldown'),t('Nothing. 4 h runs, also offline.','Không có gì. Đếm 4 giờ, kể cả khi offline.'),t('Ends → Ready','Hết giờ → Chờ hiện')],
@@ -1751,6 +1751,13 @@ function view(l){
         t(`The Limited Time Reward gift is now named “Tool Box Package!” (200 gold + 1 booster, no product ID).`,`Quà của Quà giới hạn thời gian giờ tên là “Tool Box Package!” (200 vàng + 1 công cụ, không có mã sản phẩm).`)
       ])))+
     day(t('26 Oct 2026','26/10/2026'),
+      ent(t('Popup logic and sections 6–7','Logic popup và mục 6–7'),ul([
+        t(`Followed the new template. Popup list and Popup priority moved to Live ops (7.1, 7.2). Renumbered: Store 6.2, Starter Pack 6.3, Remove Ads 6.4, Limited Time Reward 7.3, Skip Level & Retry with Booster 7.4.`,`Theo template mới. Danh sách popup và Thứ tự ưu tiên popup chuyển sang Live ops (7.1, 7.2). Đánh số lại: Cửa hàng 6.2, Gói Khởi đầu 6.3, Gỡ quảng cáo 6.4, Quà giới hạn thời gian 7.3, Bỏ qua màn & Chơi lại kèm công cụ 7.4.`),
+        t(`Offer popups show one at a time. Level Complete: Starter Pack > Remove Ads > Limited Time Reward. New game session: Starter Pack > Limited Time Reward. A blocked popup waits for its next chance.`,`Mỗi lần chỉ hiện 1 popup ưu đãi. Level Complete: Gói Khởi đầu > Gỡ quảng cáo > Quà giới hạn thời gian. Phiên chơi mới: Gói Khởi đầu > Quà giới hạn thời gian. Popup bị chặn sẽ chờ lần sau.`),
+        t(`Starter Pack first shows at Level Complete of level 12. Remove Ads first shows at the 1st interstitial after level 15. Limited Time Reward shows once per cycle, and its 10 min timer starts when the player sees it.`,`Gói Khởi đầu hiện lần đầu ở Level Complete màn 12. Gỡ quảng cáo hiện lần đầu ở quảng cáo xen kẽ đầu tiên sau màn 15. Quà giới hạn thời gian hiện 1 lần mỗi chu kỳ, timer 10 phút bắt đầu khi người chơi thấy popup.`),
+        t(`Starter Pack, Remove Ads and Limited Time Reward now use the same layout: popup appear logic, popup priority, Store & Icon, restore type.`,`Gói Khởi đầu, Gỡ quảng cáo và Quà giới hạn thời gian dùng chung một bố cục: logic hiện popup, ưu tiên popup, cửa hàng & biểu tượng, kiểu khôi phục.`),
+        t(`Store also opens when coins run short (boosters, Revive, heart refill). A failed purchase shows a notice popup. Skip Level is available from the start; Skip and Retry are off for the first 3 levels.`,`Cửa hàng cũng mở khi thiếu xu (công cụ, Hồi sinh, nạp tim). Mua lỗi thì hiện popup thông báo. Bỏ qua màn có ngay từ đầu; Bỏ qua và Chơi lại không áp dụng cho 3 màn đầu.`)
+      ]))+
       ent(t('Home screen','Màn hình chính'),ul([
         t(`Added the Home screen level tree to 1.3: the next level sits at the bottom near the Play button, no scrolling, Hard levels in purple with a bigger node.`,`Thêm cây màn chơi ở màn hình chính vào mục 1.3: màn tiếp theo nằm dưới cùng gần nút Chơi, không cuộn được, màn khó màu tím và nút to hơn.`)
       ]))+
