@@ -520,7 +520,7 @@ const SECTIONS=[
   {id:'live-ops',n:'7',c:6,en:'Live ops',vi:'Tính năng Live Ops',subs:[
     {id:'popup-list',n:'7.1',en:'Popup list',vi:'Danh sách popup'},
     {id:'popup-priority',n:'7.2',en:'Popup priority',vi:'Thứ tự ưu tiên popup'},
-    {id:'limited-time-reward',n:'7.3',en:'Limited Time Reward',vi:'Quà giới hạn thời gian'},
+    {id:'tool-box-package',n:'7.3',en:'Tool Box Package!',vi:'Tool Box Package!'},
     {id:'skip-retry',n:'7.4',en:'Skip Level & Retry with Booster',vi:'Bỏ qua màn & Chơi lại kèm công cụ'}]},
   {id:'change-note',n:'8',c:7,en:'Change note',vi:'Ghi chú thay đổi'}
 ];
@@ -1490,7 +1490,7 @@ function view(l){
     ['Tap','ui',t('The player taps the screen','Người chơi chạm vào màn hình'),1],
     ['Coin Reward','ui',t('The player earns coins','Người chơi nhận xu'),0],
     ['Booster Reward','ui',t('The player earns a booster','Người chơi nhận công cụ hỗ trợ'),0],
-    ['Purchase Complete','ui',t('An IAP purchase completes, or the player claims a limited time reward','Mua IAP thành công, hoặc người chơi nhận quà giới hạn thời gian'),0],
+    ['Purchase Complete','ui',t('An IAP purchase completes, or the player claims the Tool Box Package!','Mua IAP thành công, hoặc người chơi nhận Tool Box Package!'),0],
     ['Box to slot','core',t('The player taps a box','Người chơi chạm vào hộp'),1],
     ['Box Pulling from Dragon','core',t('A box pulls a segment from the dragon','Hộp kéo một đốt ra khỏi thân rồng'),0],
     ['Box clear','core',t('A box is full and clears from the level','Hộp đầy và rời khỏi màn'),0],
@@ -1552,7 +1552,7 @@ function view(l){
     rc(t('Unlock popups — offer unlock level','Popup mở khóa — màn mở ưu đãi'),[
       ['starter_pack_unlock_level',t('Starter Pack (IAP) — level from which the offer popup can show','Gói Khởi đầu (IAP) — màn bắt đầu có thể hiện popup ưu đãi'),'12',t('level','màn')],
       ['remove_ads_unlock_level',t('Remove Ads (IAP) — level from which the offer popup can show','Gỡ quảng cáo (IAP) — màn bắt đầu có thể hiện popup ưu đãi'),'15',t('level','màn')],
-      ['garage_gift_unlock_level',t('Limited Time Reward / Tool Box Package! (rewarded ad) — level from which the gift popup can show','Quà giới hạn thời gian / Tool Box Package! (quảng cáo thưởng) — màn bắt đầu có thể hiện popup quà'),'10',t('level','màn')]
+      ['garage_gift_unlock_level',t('Tool Box Package! (rewarded ad) — level from which the gift popup can show','Tool Box Package! (quảng cáo thưởng) — màn bắt đầu có thể hiện popup quà'),'10',t('level','màn')]
     ])+
     rc(t('Live ops','Live Ops'),[
       ['skip_level_max_per_day',t('Skip Level — max skips per day (ad or coins). The count resets each new day.','Bỏ qua màn — số lần bỏ qua tối đa mỗi ngày (bằng quảng cáo hoặc xu). Số lần được tính lại mỗi ngày mới.'),'3',t('count','lần')],
@@ -1607,10 +1607,10 @@ function view(l){
       t(`Every 4 interstitials (2nd–4th), every 8 (5th +)`,`Mỗi 4 quảng cáo xen kẽ (lần 2–4), mỗi 8 (từ lần 5)`),
       t(`2nd–4th: 20 min cooldown or new session. 5th +: 2 a day. Priority 2. Stops once bought.`,`Lần 2–4: chờ 20 phút hoặc phiên mới. Từ lần 5: 2 lần/ngày. Ưu tiên 2. Dừng khi đã mua.`),see('remove-ads','6.4')],
     [t('Rewarded-ad and coin popups','Popup quảng cáo có thưởng và xu')],
-    [nm('Limited Time Reward','Quà giới hạn thời gian'),t('Rewarded ad','Quảng cáo có thưởng'),lvl(10),
+    [nm('Tool Box Package!','Tool Box Package!'),t('Rewarded ad','Quảng cáo có thưởng'),lvl(10),
       t(`1st: Level Complete of level 10`,`Lần đầu: Level Complete màn 10`),
       t(`1st Level Complete or new game session after the 4 h cooldown`,`Level Complete hoặc phiên chơi mới đầu tiên sau cooldown 4 giờ`),
-      t(`Once per cycle. 10 min to claim. Priority 3.`,`1 lần mỗi chu kỳ. 10 phút để nhận. Ưu tiên 3.`),see('limited-time-reward','7.3')],
+      t(`Once per cycle. 10 min to claim. Priority 3.`,`1 lần mỗi chu kỳ. 10 phút để nhận. Ưu tiên 3.`),see('tool-box-package','7.3')],
     [nm('Skip Level','Bỏ qua màn'),t('Rewarded ad or coins','Quảng cáo có thưởng hoặc xu'),t('Always','Luôn có'),
       t(`Lose screen, 3 fails in a row on the same level`,`Màn hình thua, thua 3 lần liên tiếp cùng một màn`),
       t(`Each time the condition is met`,`Mỗi lần thỏa điều kiện`),
@@ -1636,16 +1636,16 @@ function view(l){
       :`<tr><th scope="row">${r[0]}</th>${r.slice(1).map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
 
   B['popup-priority']=
-    `<p class="sec-intro">${t(`Priority between the 3 offer popups: Starter Pack, Remove Ads and Limited Time Reward. When several trigger at the same time, only 1 popup is shown.`,
-      `Thứ tự ưu tiên giữa 3 popup ưu đãi: Starter Pack, Remove Ads và Limited Time Reward. Khi nhiều popup cùng kích hoạt, chỉ hiện 1 popup.`)}</p>`+
+    `<p class="sec-intro">${t(`Priority between the 3 offer popups: Starter Pack, Remove Ads and Tool Box Package! When several trigger at the same time, only 1 popup is shown.`,
+      `Thứ tự ưu tiên giữa 3 popup ưu đãi: Starter Pack, Remove Ads và Tool Box Package! Khi nhiều popup cùng kích hoạt, chỉ hiện 1 popup.`)}</p>`+
     table(t('Popup priority','Thứ tự ưu tiên popup'),[t('Triggered together on','Cùng kích hoạt ở'),t('Priority','Thứ tự ưu tiên'),t('Shown','Hiện')],[
-      [t('Level complete screen','Màn hình hoàn thành màn'),'Starter Pack > Remove Ads > Limited Time Reward',t('Only 1 popup','Chỉ 1 popup')],
-      [t('New game session','Phiên chơi mới'),'Starter Pack > Limited Time Reward',t('Only 1 popup','Chỉ 1 popup')]
+      [t('Level complete screen','Màn hình hoàn thành màn'),'Starter Pack > Remove Ads > Tool Box Package!',t('Only 1 popup','Chỉ 1 popup')],
+      [t('New game session','Phiên chơi mới'),'Starter Pack > Tool Box Package!',t('Only 1 popup','Chỉ 1 popup')]
     ],'compact')+
     table(t('When a popup is blocked','Khi popup bị chặn'),[t('Popup','Popup'),t('When blocked','Khi bị chặn')],[
       ['Starter Pack',t('Never blocked','Không bao giờ bị chặn')],
       ['Remove Ads',t('The interstitial ad counter stays at 0 and waits for the next interstitial ad to show the popup.','Bộ đếm quảng cáo xen kẽ giữ ở 0 và chờ quảng cáo xen kẽ tiếp theo để hiện popup.')],
-      ['Limited Time Reward',t('Shows on the next level win screen, and the 10 min timer starts then.','Hiện ở màn hình thắng của màn tiếp theo, và timer 10 phút bắt đầu từ lúc đó.')]
+      ['Tool Box Package!',t('Shows on the next level win screen, and the 10 min timer starts then.','Hiện ở màn hình thắng của màn tiếp theo, và timer 10 phút bắt đầu từ lúc đó.')]
     ],'compact');
 
   B['store']=kv([
@@ -1702,12 +1702,12 @@ function view(l){
   /* FIXED: keep the logic. Only change the numbers if the new game differs. */
   B['live-ops']=`<p class="sec-intro">${t(`Features that bring players back or help past hard levels, mostly for rewarded ads, plus the rules for every offer popup (7.1, 7.2).`,
     `Tính năng kéo người chơi quay lại hoặc giúp qua màn khó, phần lớn đổi bằng quảng cáo có thưởng, cùng quy tắc cho mọi popup ưu đãi (7.1, 7.2).`)}</p>`;
-  B['limited-time-reward']=
-    sys(nm('Limited Time Reward','Quà giới hạn thời gian'),
+  B['tool-box-package']=
+    sys(nm('Tool Box Package!','Tool Box Package!'),
       lead(t(`A free gift claimed with a rewarded ad. Shows once per cycle, at the 1st Level Complete or new game session after the cooldown.`,`Quà miễn phí nhận bằng quảng cáo có thưởng. Hiện 1 lần mỗi chu kỳ, ở Level Complete hoặc phiên chơi mới đầu tiên sau khi hết cooldown.`))+
-      tiles([[`200 + 1`,t('Gold + booster (“Gold Brick Package!”)','Vàng + công cụ (“Gold Brick Package!”)')],[t('10 min','10 phút'),t('Timer, from when it shows','Timer, tính từ lúc hiện')],[t('4 h','4 giờ'),t('Cooldown after the timer','Cooldown sau khi hết timer')],[t('Level 10','Màn 10'),t('Unlocks','Mở khóa')]])+      
+      tiles([[`200 + 1`,t('Gold + booster','Vàng + công cụ')],[t('10 min','10 phút'),t('Timer, from when it shows','Timer, tính từ lúc hiện')],[t('4 h','4 giờ'),t('Cooldown after the timer','Cooldown sau khi hết timer')],[t('Level 10','Màn 10'),t('Unlocks','Mở khóa')]])+      
       panel(t('Popup appear logic','Logic hiện popup'),
-        table(t('Limited Time Reward cycle','Chu kỳ Quà giới hạn thời gian'),[t('State','Trạng thái'),t('Player sees','Người chơi thấy'),t('Next','Tiếp theo')],[
+        table(t('Tool Box Package! cycle','Chu kỳ Tool Box Package!'),[t('State','Trạng thái'),t('Player sees','Người chơi thấy'),t('Next','Tiếp theo')],[
           [t('Cooldown','Cooldown'),t('Nothing. 4 h runs, also offline.','Không có gì. Đếm 4 giờ, kể cả khi offline.'),t('Ends → Ready','Hết giờ → Chờ hiện')],
           [t('Ready','Chờ hiện'),t('Nothing yet','Chưa có gì'),t('Next Level Complete or new game session, not blocked → Live','Level Complete hoặc phiên chơi mới tiếp theo, không bị chặn → Đang hiện')],
           [t('Live','Đang hiện'),t('Popup, then HUD icon with the 10 min timer','Popup, sau đó biểu tượng HUD kèm timer 10 phút'),t('Claim → reward · 10 min over → offer gone','Nhận → có quà · Hết 10 phút → offer biến mất')],
@@ -1748,7 +1748,8 @@ function view(l){
     day(t('27 Oct 2026','27/10/2026'),
       ent(t('Pack IDs and reward name','Mã gói và tên quà'),ul([
         t(`Product ID prefix changed from <code>wool.gather</code> to <code>wg</code> (e.g. <code>wg.starter_pack</code>), following the pack table.`,`Đổi tiền tố mã sản phẩm từ <code>wool.gather</code> sang <code>wg</code> (ví dụ <code>wg.starter_pack</code>), theo bảng gói.`),
-        t(`The Limited Time Reward gift is now named “Tool Box Package!” (200 gold + 1 booster, no product ID).`,`Quà của Quà giới hạn thời gian giờ tên là “Tool Box Package!” (200 vàng + 1 công cụ, không có mã sản phẩm).`)
+        t(`The Limited Time Reward gift is now named “Tool Box Package!” (200 gold + 1 booster, no product ID).`,`Quà của Quà giới hạn thời gian giờ tên là “Tool Box Package!” (200 vàng + 1 công cụ, không có mã sản phẩm).`),
+        t(`Limited Time Reward is now called Tool Box Package! everywhere: section 7.3 title, popup list, popup priority, SFX and remote config text. The config key <code>garage_gift_unlock_level</code> is unchanged.`,`Quà giới hạn thời gian giờ được gọi là Tool Box Package! ở mọi nơi: tên mục 7.3, danh sách popup, thứ tự ưu tiên popup, âm thanh và mô tả cấu hình từ xa. Key cấu hình <code>garage_gift_unlock_level</code> giữ nguyên.`)
       ])))+
     day(t('26 Oct 2026','26/10/2026'),
       ent(t('Popup logic and sections 6–7','Logic popup và mục 6–7'),ul([
